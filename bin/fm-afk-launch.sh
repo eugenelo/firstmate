@@ -15,8 +15,8 @@
 # On Pi and pi-signed the entry ENDS there: the away daemon is no longer launched
 # on Pi, the ordinary supervision session keeps running in both postures, and
 # `start` refuses on those harnesses. Every other harness still runs the daemon
-# for now, so `start` and `start-native` require the confirmed record before they
-# launch the daemon.
+# for now. Away-mode start requires the confirmed record; quiet-mode start
+# needs no away mandate because the captain is present.
 # `stop` (the return, driven by bin/fm-afk-return.sh) shuts the daemon down,
 # clears state/.afk last, and archives the record under state/afk-contracts/.
 #
@@ -214,6 +214,7 @@ fm_afk_launch_catchup_pending() {
 
 fm_afk_launch_record_require() {
   local record
+  [ "${FM_AFK_MODE:-$(fm_afk_mode "$FM_AFK_LAUNCH_STATE")}" = quiet ] && return 0
   record=$(fm_afk_contract_path "$FM_AFK_LAUNCH_STATE")
   if ! fm_afk_contract_present "$FM_AFK_LAUNCH_STATE"; then
     fm_afk_launch_log "a confirmed away-posture record is required; run propose and confirm before starting the daemon"

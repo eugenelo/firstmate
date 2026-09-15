@@ -49,7 +49,8 @@ Hold-for-return is the default and the only reach profile this release records: 
      It is the single owner of the daemon terminal: it creates a NON-VISIBLE tracked terminal for the current backend and passes the captain pane in as `FM_SUPERVISOR_TARGET` so the daemon injects into the captain, not its own new pane (docs/herdr-backend.md "Away-mode supervisor support").
    Both daemon paths require the already-confirmed record and share `bin/fm-afk-start.sh` as the daemon entry.
    The daemon is **presence-gated**: it injects escalations only while `state/.afk` exists, and stays quiet otherwise.
-5. **Do not separately arm `fm-watch.sh` where the daemon runs.** The daemon manages the watcher as its child; the singleton lock no-ops a stray arm harmlessly.
+5. **Do not separately arm `fm-watch.sh` where the daemon runs.**
+   OMP retains its extension-owned monitor under `docs/supervision-protocols/omp.md`; other daemon-backed harnesses use the daemon's watcher child.
    On Pi nothing changes about arming: the supervision session's own cycle continues.
 
 ## While away
@@ -106,6 +107,8 @@ The operational prefix travels with the message text; it does not rely on harnes
 
 ### Busy-guard and composer guard
 
+OMP uses the native escalation transport owned by `bin/fm-supervise-daemon.sh`, not the terminal injection and submit model below.
+
 The daemon never injects into an in-use pane. Two checks run before every
 injection, dispatched through `bin/fm-backend.sh` for the supervisor's own
 backend (tmux or herdr; see "Auto-discovered supervisor pane" below):
@@ -149,11 +152,12 @@ The daemon still clears its buffer only on the backend's `empty` success verdict
 
 ### Classification policy
 
-The daemon wraps `fm-watch.sh`, runs the watcher as a child, presents every durable wake after each actionable watcher close, classifies each presented record in bash, and acknowledges the presented generation only after routing completes.
+The daemon presents durable wakes, classifies each presented record in bash, and acknowledges the presented generation only after routing completes.
+It normally wraps `fm-watch.sh` as a child; OMP retains the extension-owned monitor under `docs/supervision-protocols/omp.md`.
 It self-handles the routine majority without consuming a firstmate turn.
 Captain-relevant events, plus a bounded recheck of a declared external wait that is still declared, escalate to firstmate's context as one pre-read, single-line, batched digest.
 The captain-relevant verb set, declared-wait vocabulary, status-span classifier, and presentation-marker contract live in shared `bin/fm-classify-lib.sh`, while each supervisor owns its routing and fleet scan as a consumer of that policy.
-While `state/.afk` exists the daemon owns the watcher, so the watcher reverts to one-shot and lets the daemon do the triage - the two never run their triage at the same time.
+While `state/.afk` exists the daemon owns triage, so the watcher reverts to one-shot - the two never run their triage at the same time.
 
 Classify each wake this way:
 

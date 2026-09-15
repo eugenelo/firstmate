@@ -26,6 +26,32 @@ TMP_ROOT=$(fm_test_tmproot fm-daemon-tests)
 FM_DAEMON_PRIMARY_HARNESS=claude
 export FM_DAEMON_PRIMARY_HARNESS
 
+test_omp_native_digest_preserves_pending_delivery() {
+  local dir state omp_native=1 first
+  dir=$(make_supercase omp-native-digest)
+  state="$dir/state"
+  printf 'quiet\n' > "$state/.afk"
+  printf 'working: routine progress\n' > "$state/crew.status"
+  handle_wake "signal: $state/crew.status" "$state" || fail "routine OMP classification failed"
+  handle_wake "heartbeat" "$state" || fail "routine OMP heartbeat failed"
+  assert_absent "$state/.subsuper-escalations" "routine OMP activity escalated"
+  printf 'blocked: synthetic credential required\nworking: later progress\n' >> "$state/crew.status"
+  handle_wake "signal: $state/crew.status" "$state" || fail "OMP blocker classification failed"
+  escalate_flush "$state" || fail "native OMP digest was not published"
+  first=$(cat "$state/.omp-escalation")
+  assert_contains "$first" "synthetic credential required" "native digest lost a blocker masked by later progress"
+  assert_not_contains "$first" "later progress" "native digest included routine progress"
+  escalate_add "$state" "done: synthetic review ready" || fail "second digest was not buffered"
+  if escalate_flush "$state"; then fail "occupied native slot accepted a second digest"; fi
+  [ "$(cat "$state/.omp-escalation")" = "$first" ] || fail "pending native digest was overwritten"
+  assert_contains "$(cat "$state/.subsuper-escalations")" "synthetic review ready" "second digest was discarded"
+  rm "$state/.omp-escalation"
+  escalate_flush "$state" || fail "native delivery did not retry after consumption"
+  assert_contains "$(cat "$state/.omp-escalation")" "synthetic review ready" "native retry lost review-ready outcome"
+  assert_absent "$dir/injected" "native OMP delivery typed terminal input"
+  pass "OMP native classification preserves blockers, suppresses routine activity, and never overwrites an unconsumed digest"
+}
+
 test_afk_start_refuses_when_flag_cannot_be_written() {
   local dir state out status
   dir=$(make_supercase afk-start-flag-unwritable)
@@ -2907,3 +2933,4 @@ test_inject_msg_herdr_pane_gone_defers
 test_inject_msg_herdr_submits_through_backend_dispatch
 test_inject_msg_defers_on_dead_shell_unknown
 test_inject_msg_defers_on_unrecognized_composer_state
+test_omp_native_digest_preserves_pending_delivery

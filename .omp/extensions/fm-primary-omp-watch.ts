@@ -6,17 +6,17 @@
 //   - omp auto-discovers this file from <cwd>/.omp/extensions with no trust
 //     gate, so an omp primary or secondmate started inside its home loads it
 //     without -e (naming it both ways loads it twice - verified, omp 18.1.11).
-//   - pi.sendUserMessage returns synchronously (no promise) in omp, so "Pi
-//     accepted the follow-up" collapses to "the call returned"; consumption is
-//     still tracked at before_agent_start / message_start exactly as on Pi.
+//   - omp.sendMessage returns synchronously. Custom next-turn messages keep
+//     operational input out of the user-submission path, which clears drafts.
+//     Consumption is tracked at message_start, not at the synchronous return.
 //   - omp reports no session_shutdown reason, so EVERY shutdown with a pending
 //     actionable close persists the replacement handoff and the next owning
 //     session_start, in this process or a later one, replays it. Replaying a
 //     wake main has already drained is harmless (the queue is durable and the
 //     drain is idempotent); losing one across /new is not.
-//   - The Pi supervision branch is out of scope for omp: every actionable wake
-//     is delivered to main, so no branch offer is made and no calm presentation
-//     hooks exist.
+//   - The Pi supervision branch is out of scope for omp. The extension always
+//     owns the monitor; in away/quiet mode the existing daemon consumes its
+//     durable wakes and publishes classified digests to state/.omp-escalation.
 //   - The arming tool is fm_watch_arm_omp and its human fallback
 //     /fm-watch-arm-omp; the loaded-build marker is state/.omp-watch-extension-loaded.
 //
@@ -30,19 +30,15 @@
 // durable state lives at state/extensions/omp-primary-watch/session-replacement-actionable.json.
 // Stale callbacks from a prior generation are no-ops against the active replacement.
 //
-// Delivery versus consumption (stated once here):
-// A main follow-up is delivered once omp accepts it (sendUserMessage returns).
-// The successor pipeline never waits for the model to read it: a follow-up
-// queued while main is streaming joins the running run without ever raising
-// before_agent_start, so waiting on that event stalls every later close.
-// Consumption is tracked only so a replacement can replay a follow-up omp had
-// not consumed. An idle main consumes at before_agent_start; a streaming main
-// consumes at the user message_start carrying the exact wake text; either
-// event finishes the pending record, and a still-unconsumed record rides the
-// replacement handoff.
+// Delivery versus consumption:
+// Custom next-turn messages start an idle turn or join the next continuation
+// without submitting or mutating the composer's text, cursor, or attachments.
+// A custom message_start confirms consumption; an unconsumed watcher close
+// rides the replacement handoff. Daemon digests stay in state/.omp-escalation
+// until consumption, so session replacement replays them without a second copy.
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 // typebox resolves inside omp's extension loader (verified, omp 18.1.11); the
@@ -51,14 +47,14 @@ import { Type } from "typebox";
 // The operational-input encoder is shared with the omp extensions; its owner
 // resolves bin/fm-operational-input.sh relative to its own location, which is
 // the same repository root this file lives in.
-import { encodeFirstmateOperationalInput } from "../../.pi/extensions/lib/fm-operational-input.ts";
+import { classifyFirstmateCurrentOperationalText, encodeFirstmateOperationalInput } from "../../.pi/extensions/lib/fm-operational-input.ts";
 
 // The omp extension API surface this file uses. omp is a Pi fork and ships no
 // separately installable type package, so the contract is declared locally
 // rather than imported from the Pi package name.
 type ExtensionAPI = {
   on?: (event: string, handler: (event: any, ctx: any) => unknown) => void;
-  sendUserMessage: (content: string, options?: { deliverAs?: string }) => unknown;
+  sendMessage: (message: { customType: string; content: string; display: boolean }, options: { triggerTurn: boolean; deliverAs: string }) => unknown;
   registerCommand?: (name: string, command: { description: string; handler: (args: string, ctx: any) => Promise<void> | void }) => void;
   registerTool?: (tool: Record<string, unknown>) => void;
 };
@@ -100,15 +96,15 @@ type SessionGeneration = {
   child: ChildProcess | null;
   retryTimer: ReturnType<typeof setTimeout> | null;
   cleanupTimer: ReturnType<typeof setTimeout> | null;
+  inboxTimer: NodeJS.Timeout | null;
+  nativeWake: { content: string; consumed: boolean } | null;
   retryFailures: number;
   restoring: boolean;
   seq: number;
   pendingActionables: PendingActionableClose[];
   cleanupFailure: string;
-  // Main follow-ups omp has accepted but not yet consumed, by pending token.
-  // Never cleared at shutdown: a delivery continuation that runs after the
-  // replacement began reads it to tell a main-queued wake (replayed) from a
-  // branch-handled one (finished).
+  // Messages accepted by omp but not yet consumed, by pending token.
+  // Session replacement replays them from the durable handoff.
   unconsumedWakes: Map<string, UnconsumedWake>;
   // A verified successor's failure close that arrived while the pipeline was
   // still delivering the wake it was started for; its bounded retry runs once
@@ -127,6 +123,8 @@ const armScript = `${fmRoot}/bin/fm-watch-arm.sh`;
 const marker = `${state}/.omp-watch-extension-loaded`;
 const handoffDir = `${state}/extensions/omp-primary-watch`;
 const actionableHandoff = `${handoffDir}/session-replacement-actionable.json`;
+const daemonInbox = `${state}/.omp-escalation`;
+const wakeMessageType = "firstmate-wake";
 const extensionVersion = `sha256:${createHash("sha256").update(readFileSync(extensionFile)).digest("hex")}`;
 const retryBaseMs = positiveInteger("FM_WATCH_REARM_RETRY_BASE_MS", 250);
 const retryMaxMs = positiveInteger("FM_WATCH_REARM_RETRY_MAX_MS", 4000);
@@ -237,23 +235,6 @@ function completedActionableLine(output: string): string {
   return newline < 0 ? "" : actionableLine(output.slice(0, newline + 1));
 }
 
-// The text omp carries in a user message_start: sendUserMessage wraps a string
-// as one text part, so the joined text parts equal the sent content.
-function userMessageText(content: unknown): string {
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return "";
-  const parts: string[] = [];
-  for (const part of content) {
-    if (
-      typeof part === "object" && part !== null &&
-      (part as { type?: unknown }).type === "text" &&
-      typeof (part as { text?: unknown }).text === "string"
-    ) {
-      parts.push((part as { text: string }).text);
-    }
-  }
-  return parts.join("\n");
-}
 
 function nodeErrorCode(error: unknown): string {
   return typeof error === "object" && error !== null && "code" in error
@@ -407,6 +388,8 @@ function createGeneration(): SessionGeneration {
     child: null,
     retryTimer: null,
     cleanupTimer: null,
+    inboxTimer: null,
+    nativeWake: null,
     retryFailures: 0,
     restoring: false,
     seq: 0,
@@ -429,8 +412,10 @@ function stopGeneration(generation: SessionGeneration): ChildProcess | null {
   generation.stopping = true;
   if (generation.retryTimer) clearTimeout(generation.retryTimer);
   if (generation.cleanupTimer) clearTimeout(generation.cleanupTimer);
+  if (generation.inboxTimer) clearInterval(generation.inboxTimer);
   generation.retryTimer = null;
   generation.cleanupTimer = null;
+  generation.inboxTimer = null;
   const child = generation.child;
   if (child) child.kill("SIGTERM");
   generation.child = null;
@@ -499,21 +484,25 @@ export default function (pi: ExtensionAPI) {
     );
     if (pending) owner.unconsumedWakes.set(pending.token, { content, pending });
     try {
-      await pi.sendUserMessage(content, { deliverAs: "followUp" });
+      await pi.sendMessage(
+        { customType: wakeMessageType, content, display: true },
+        { deliverAs: "nextTurn", triggerTurn: true },
+      );
     } catch (error) {
       if (pending) owner.unconsumedWakes.delete(pending.token);
       throw error;
     }
-    // Accepted by omp (sendUserMessage returns synchronously there; awaiting a
-    // non-promise resolves at once). A generation replaced while omp was
-    // accepting it may have lost the follow-up with the old session, so report
-    // it undelivered and let the replacement replay the still-pending record.
+    // Replacement may happen before omp consumes the accepted message.
+    // In that case the replacement replays the still-pending record.
     return generationIsLive(owner);
   }
 
-  // omp consumed a main follow-up: an idle main at before_agent_start, a
-  // streaming main at the user message_start that joins the running run.
+  // Only the owning session may acknowledge a consumed custom message.
   function consumeWake(owner: SessionGeneration, text: string): void {
+    if (!generationIsLive(owner)) return;
+    if (owner.nativeWake?.content === text) {
+      owner.nativeWake.consumed = true;
+    }
     for (const [token, wake] of owner.unconsumedWakes) {
       if (wake.content !== text) continue;
       owner.unconsumedWakes.delete(token);
@@ -587,7 +576,23 @@ export default function (pi: ExtensionAPI) {
         return await sendWake(owner, `${message}\n\n${confirmed.detail}`, pending);
       }
     }
-    // No supervision branch on omp: every actionable wake goes to main.
+    if (existsSync(`${state}/.afk`)) {
+      // The flag precedes daemon readiness during entry. Keep the monitor
+      // running while the existing owner becomes ready; never route routine
+      // events to main just because its terminal is still starting.
+      for (let attempt = 0; attempt <= retryLimit; attempt += 1) {
+        if (!generationIsLive(owner)) return false;
+        if (!existsSync(`${state}/.afk`)) break;
+        const ready = spawnSync("bash", ["-c",
+          '. "$1/bin/fm-wake-lib.sh"; fm_afk_daemon_owns_supervision "$2"',
+          "omp-quiet-owner", fmRoot, state], { env: { ...process.env, FM_HOME: fmHome }, stdio: "ignore" });
+        if (ready.status === 0) return true; // Queue remains durable until daemon classification.
+        if (attempt === retryLimit) {
+          return await sendWake(owner, `${message}\nwatcher: FAILED - away/quiet daemon is unavailable; durable wakes need recovery`, pending);
+        }
+        await waitForRetry(attempt + 1);
+      }
+    }
     return await sendWake(owner, message, pending);
   }
 
@@ -1019,13 +1024,46 @@ export default function (pi: ExtensionAPI) {
     return result;
   }
 
-  pi.on?.("before_agent_start", (event) => {
-    consumeWake(generation, String((event as { prompt?: unknown })?.prompt ?? ""));
-  });
+  function startDaemonInbox(owner: SessionGeneration): void {
+    if (owner.inboxTimer) return;
+    let failure = "";
+    owner.inboxTimer = setInterval(() => {
+      if (!generationIsLive(owner) || lockOwnership() !== "owned") return;
+      try {
+        if (owner.nativeWake) {
+          if (!owner.nativeWake.consumed) return;
+          if (existsSync(daemonInbox)) unlinkSync(daemonInbox);
+          owner.nativeWake = null;
+        }
+        if (!existsSync(daemonInbox)) return;
+        const content = readFileSync(daemonInbox, "utf8");
+        if (classifyFirstmateCurrentOperationalText(content)?.trim() !== "away-supervisor") {
+          throw new Error("invalid native OMP escalation envelope");
+        }
+        owner.nativeWake = { content, consumed: false };
+        try {
+          pi.sendMessage(
+            { customType: wakeMessageType, content, display: true },
+            { deliverAs: "nextTurn", triggerTurn: true },
+          );
+        } catch (error) {
+          owner.nativeWake = null;
+          throw error;
+        }
+        failure = "";
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        if (failure !== detail) surfaceFailure(owner, `watcher: FAILED - cannot deliver native daemon escalation\n${detail}`);
+        failure = detail;
+      }
+    }, 250);
+    owner.inboxTimer.unref();
+  }
+
   pi.on?.("message_start", (event) => {
-    const message = (event as { message?: { role?: unknown; content?: unknown } })?.message;
-    if (!message || message.role !== "user") return;
-    consumeWake(generation, userMessageText(message.content));
+    const message = event?.message;
+    if (!message || message.role !== "custom" || message.customType !== wakeMessageType) return;
+    if (typeof message.content === "string") consumeWake(generation, message.content);
   });
 
   pi.on?.("session_start", async () => {
@@ -1034,6 +1072,7 @@ export default function (pi: ExtensionAPI) {
     markLoaded();
     if (lockOwnership() !== "owned") return;
     activateOwnedWatch(generation);
+    startDaemonInbox(generation);
   });
   pi.on?.("session_shutdown", async () => {
     // omp carries no shutdown reason (verified: `reason` is undefined), so the
@@ -1070,4 +1109,5 @@ export default function (pi: ExtensionAPI) {
   });
 
   markLoaded();
+  startDaemonInbox(generation);
 }

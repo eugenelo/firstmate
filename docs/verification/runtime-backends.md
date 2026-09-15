@@ -1907,3 +1907,35 @@ A throwaway scout was spawned through `bin/fm-spawn.sh --scout --harness omp --m
 6. `bin/fm-control.sh <id> exit` stopped the agent and `bin/fm-teardown.sh` returned the worktree and closed the item.
 
 `FM_OMP_LIVE_E2E=1 tests/fm-omp-primary-live-e2e.test.sh` refreshes the primary evidence; the worker path above is refreshed by repeating the scout dispatch after any omp upgrade.
+
+### Quiet mode and composer preservation
+
+Verified on 2026-09-15 on Linux x86_64 with the installed OMP executable reporting 18.2.0 and `openai-codex/gpt-6-astra`.
+The containing package directory and `package.json` reported 18.1.14; the executable's embedded event-controller code and the real TUI, not the package version alone, established the behavior.
+
+The pre-fix reproduction kept a multiline draft at a nonterminal cursor position while delivering an extension-generated user message.
+OMP cleared that draft at the injected user message's `message_start`, before the real `bin/fm-wake-drain.sh` ran.
+A custom next-turn message using OMP's supported `sendMessage` API preserved the draft without reading, clearing, or restoring the editor in production code.
+
+```sh
+FM_OMP_DRAFT_LIVE=1 tests/fm-omp-quiet-draft-live-e2e.test.sh
+```
+
+The credentialed TUI guard uses a named, disposable Herdr lab through `bin/fm-herdr-lab.sh`, including nested daemon lifecycle operations.
+It loads the real tracked OMP extensions and runs the real monitor, quiet launcher, daemon, drain, and acknowledgement path.
+Its synthetic startup runner stands down and its probe seeds the session lock; it does not replace the separate startup/bootstrap evidence above.
+All prompts, events, and the attached image are synthetic, and no evidence is uploaded.
+
+The successful run proved:
+
+- Quiet entry needed no away mandate; refresh reused the same daemon and retained one monitor.
+- A routine status update and heartbeat were consumed without starting a model turn.
+- Two actionable events reached OMP through native custom messages while a multiline draft and image attachment remained in the composer.
+- Typing `X` at the retained cursor during delivery changed `draft omega` to `draft omXega`; the real drain and the second notification preserved that edit.
+- Deliberate Enter submitted that draft once with exactly one image; ordinary chat did not exit quiet mode.
+- Explicit quiet exit stopped the daemon while the monitor continued, and an attended-mode wake preserved a second draft through draining and deliberate submission.
+- Guarded lab cleanup completed without changing the default Herdr fleet.
+
+`tests/fm-omp-harness.test.sh` additionally covers unconsumed native-digest replay across session replacement and restoration of attended delivery.
+`tests/fm-daemon.test.sh` covers routine suppression, actionable classification, and backpressure without overwriting a pending native digest.
+Those replacement and backpressure cases are portable regressions, not claims of additional live TUI scenarios.

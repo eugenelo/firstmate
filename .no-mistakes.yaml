@@ -33,8 +33,8 @@ document:
 commands:
   lint: 'bin/fm-lint.sh'
 
-# Publish each run's test evidence to the orphan no-mistakes/evidence branch linked from the PR.
-# The evidence is not committed to the feature or default branch.
+# Keep test evidence local; publishing source does not authorize media uploads.
 test:
   evidence:
-    store_in_repo: true
+    store_in_repo: false
+    attach_media: false

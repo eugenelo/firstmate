@@ -140,6 +140,22 @@ unit_daemon_entry_requires_confirmation() {
   rm -rf "$st"
 }
 
+unit_quiet_entry_does_not_create_an_away_mandate() {
+  local st
+  st=$(mktemp -d "${TMPDIR:-/tmp}/fm-quiet-entry.XXXXXX")
+  mkdir -p "$st/state"
+  if FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_AFK_MODE=quiet "$LAUNCH" start-native >/dev/null 2>&1 \
+    && [ "$(sed -n '1p' "$st/state/.afk")" = quiet ] \
+    && [ ! -e "$st/state/.afk-contract" ]; then
+    pass "quiet entry prepares supervision without inventing an away mandate"
+  else
+    fail "quiet entry incorrectly required or created an away mandate"
+  fi
+  FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" "$LAUNCH" stop >/dev/null 2>&1
+  if [ ! -e "$st/state/.afk" ]; then pass "quiet exit clears its flag"; else fail "quiet exit retained its flag"; fi
+  rm -rf "$st"
+}
+
 unit_failed_daemon_launch_preserves_confirmed_record() {
   local st
   st=$(mktemp -d "${TMPDIR:-/tmp}/fm-afk-failed-record.XXXXXX")
@@ -1189,6 +1205,7 @@ unit_clear_stale
 unit_propose_confirm_records_the_posture_without_a_daemon
 unit_pi_never_launches_the_daemon
 unit_daemon_entry_requires_confirmation
+unit_quiet_entry_does_not_create_an_away_mandate
 unit_failed_daemon_launch_preserves_confirmed_record
 unit_stop_archives_the_record_last
 unit_relative_paths_are_absolute_before_daemon_launch

@@ -523,6 +523,7 @@ test_watch_extension_arms_and_delivers() {
   # stays up, so exactly one wake exists to consume.
   cat > "$repo/bin/fm-watch-arm.sh" <<'SH'
 #!/usr/bin/env bash
+if [ "${1:-}" = --handling-delivered ]; then exit 0; fi
 printf 'watcher: started pid=%s (beacon 0s) recovery-generation=gen-1\n' "$$"
 if [ ! -e "${FM_HOME:?}/state/.e2e-fired" ]; then
   : > "$FM_HOME/state/.e2e-fired"
@@ -543,8 +544,7 @@ const pi = {
   on(e, h) { handlers.set(e, h); },
   registerCommand(n, o) { if (n === "fm-watch-arm-omp") command = o.handler; },
   registerTool(t) { tool = t; },
-  // omp sendUserMessage returns synchronously, not a promise.
-  sendUserMessage(m, o) { sent.push({ m, o }); return undefined; },
+  sendMessage(m, o) { sent.push({ m, o }); },
 };
 const mod = await import(pathToFileURL(process.env.EXT).href);
 mod.default(pi);
@@ -559,10 +559,9 @@ const again = await tool.execute();
 if (!/^watcher: unchanged - omp extension already owns an arm child/.test(again.content[0].text)) throw new Error(`redundant arm was not an ownership no-op: ${again.content[0].text}`);
 await new Promise((r) => setTimeout(r, 2500));
 if (sent.length !== 1) throw new Error(`expected one follow-up wake, saw ${sent.length}: ${JSON.stringify(sent)}`);
-if (!sent[0].m.startsWith("⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal: omp-e2e done")) throw new Error(`unexpected wake text: ${sent[0].m}`);
-if (sent[0].o?.deliverAs !== "followUp") throw new Error("wake must be delivered as a follow-up");
-// The wake is consumed when omp starts the next run with that exact prompt.
-await handlers.get("before_agent_start")({ type: "before_agent_start", prompt: sent[0].m }, {});
+if (!sent[0].m.content.startsWith("⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal: omp-e2e done")) throw new Error(`unexpected wake text: ${sent[0].m.content}`);
+if (sent[0].o?.deliverAs !== "nextTurn" || !sent[0].o.triggerTurn) throw new Error("wake must trigger a custom next turn");
+await handlers.get("message_start")({ message: { role: "custom", ...sent[0].m } }, {});
 await handlers.get("session_shutdown")({}, {});
 if (existsSync(`${process.env.FM_HOME}/state/extensions/omp-primary-watch/session-replacement-actionable.json`)) throw new Error("a consumed wake must not ride the replacement handoff");
 process.exit(0);
@@ -573,6 +572,88 @@ EOF
   [ -z "$out" ] || fail "omp watch extension test printed output: $out"
   pass ".omp watch extension: fm_watch_arm_omp arms once, repeats as a no-op, and delivers an actionable close as one follow-up"
 }
+test_watch_quiet_delivery_and_replacement() {
+  local repo home out status
+  repo="$TMP_ROOT/quiet/repo"; home="$TMP_ROOT/quiet/home"
+  install_omp_extension_fixture "$repo"
+  cp "$ROOT/bin/fm-wake-lib.sh" "$repo/bin/"
+  mkdir -p "$home/state/.supervise-daemon.lock"
+  cat > "$repo/bin/fm-watch-arm.sh" <<'SH'
+#!/usr/bin/env bash
+if [ "${1:-}" = --handling-delivered ]; then exit 0; fi
+printf '%s\n' "$$" >> "$FM_HOME/arms"
+printf 'watcher: started pid=%s (beacon fresh)\n' "$$"
+while [ ! -f "$FM_HOME/trigger" ]; do sleep 0.1; done
+cat "$FM_HOME/trigger"
+rm "$FM_HOME/trigger"
+SH
+  chmod +x "$repo/bin/fm-watch-arm.sh"
+  out=$(FM_HOME="$home" FM_ROOT_OVERRIDE="$repo" EXT="$repo/.omp/extensions/fm-primary-omp-watch.ts" \
+    node --input-type=module 2>&1 <<'EOF'
+import { pathToFileURL } from "node:url";
+import { spawnSync } from "node:child_process";
+import { writeFileSync, existsSync, readFileSync, unlinkSync } from "node:fs";
+const home = process.env.FM_HOME, state = `${home}/state`;
+const waitFor = async (predicate) => {
+  for (let i = 0; i < 200; i++) {
+    if (predicate()) return;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  throw new Error("timed out waiting for native delivery");
+};
+writeFileSync(`${state}/.lock`, `${process.pid}\n`);
+writeFileSync(`${state}/.afk`, "quiet\n");
+writeFileSync(`${state}/.supervise-daemon.lock/pid`, `${process.pid}\n`);
+const identity = spawnSync("bash", ["-c", '. "$1/bin/fm-wake-lib.sh"; fm_pid_identity "$2"', "test", process.env.FM_ROOT_OVERRIDE, String(process.pid)], { encoding: "utf8" });
+if (identity.status !== 0) throw new Error(identity.stderr);
+writeFileSync(`${state}/.supervise-daemon.lock/pid-identity`, identity.stdout);
+const handlers = new Map(), sent = [];
+let arm;
+const pi = {
+  on(name, handler) { handlers.set(name, handler); },
+  registerTool(tool) { arm = tool.execute; },
+  sendMessage(message, options) { sent.push({ message, options }); },
+};
+const mod = await import(pathToFileURL(process.env.EXT).href);
+mod.default(pi);
+await arm();
+const arms = () => readFileSync(`${home}/arms`, "utf8").trim().split("\n").length;
+await waitFor(() => existsSync(`${home}/arms`));
+writeFileSync(`${state}/.wake-queue`, "1\t1\theartbeat\theartbeat\theartbeat\n");
+writeFileSync(`${home}/trigger`, "heartbeat\n");
+await waitFor(() => arms() === 2);
+await new Promise(r => setTimeout(r, 400));
+if (sent.length) throw new Error("quiet routine wake reached main");
+if (!readFileSync(`${state}/.wake-queue`, "utf8").includes("heartbeat")) throw new Error("quiet transfer discarded the durable wake");
+await arm();
+if (arms() !== 2) throw new Error("quiet refresh duplicated the monitor");
+
+const digest = "⁣FIRSTMATE_OP: v1 away-supervisor: needs-decision: synthetic approval";
+writeFileSync(`${state}/.omp-escalation`, digest);
+await waitFor(() => sent.length === 1);
+if (!existsSync(`${state}/.omp-escalation`)) throw new Error("native digest acknowledged before consumption");
+await handlers.get("session_shutdown")({});
+await handlers.get("session_start")({});
+await waitFor(() => sent.length === 2);
+if (sent[1].message.content !== digest) throw new Error("replacement lost the pending digest");
+await handlers.get("message_start")({ message: { role: "custom", ...sent[1].message } });
+await waitFor(() => !existsSync(`${state}/.omp-escalation`));
+if (readFileSync(`${state}/.afk`, "utf8") !== "quiet\n") throw new Error("native delivery exited quiet mode");
+const prior = arms();
+unlinkSync(`${state}/.afk`);
+writeFileSync(`${home}/trigger`, "check: synthetic failure\n");
+await waitFor(() => sent.length === 3);
+if (!sent[2].message.content.includes("synthetic failure")) throw new Error("quiet exit lost the next actionable wake");
+if (arms() !== prior + 1) throw new Error("quiet exit did not preserve one successor");
+await handlers.get("message_start")({ message: { role: "custom", ...sent[2].message } });
+await handlers.get("session_shutdown")({});
+EOF
+)
+  status=$?
+  expect_code 0 "$status" "OMP quiet native delivery: $out"
+  pass "OMP keeps one monitor in quiet mode and replays unconsumed native digests across replacement"
+}
+
 
 test_detection_anchored_name_and_marker_precedence
 test_lock_identity_and_liveness_classification
@@ -585,3 +666,4 @@ test_control_composer_and_model_tables
 test_ownership_proof_is_omp_keyed
 test_turnend_guard_extension_compels_one_continuation
 test_watch_extension_arms_and_delivers
+test_watch_quiet_delivery_and_replacement

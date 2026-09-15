@@ -12,7 +12,7 @@ When this session owns supervision and away mode is not active:
 5. The extension starts `bin/fm-watch-arm.sh --restart`, keeps the child attached to the live omp process, and owns every later successor launch.
 6. Ordinary same-process session replacement (`/new`, `/resume`, `/fork`) retires only the prior generation; when the replacement owns the fleet lock, its `session_start` arms the new generation without a model turn or another `fm_watch_arm_omp` call.
    The generation-owner contract and in-flight actionable-close handoff live in `.omp/extensions/fm-primary-omp-watch.ts`; because omp reports no shutdown reason, every shutdown with a pending actionable close persists the handoff, and the next owning `session_start` in any process replays it.
-7. After an actionable child close, the extension rechecks session-lock ownership and verifies one successor before it delivers the follow-up wake; its bounded fallback is defined in `docs/watcher-continuity.md`.
+7. After an actionable child close, the extension rechecks session-lock ownership and verifies one successor before delivery; its bounded fallback is defined in `docs/watcher-continuity.md`.
 8. Ordinary work, turn completion, and ordinary signal, stale, check, heartbeat, or other wake handling: do not call `fm_watch_arm_omp` again because continuity is extension-owned rather than model-memory-owned.
 9. An unexpected child close enters bounded exponential retry, and an exhausted retry or lost session lock is surfaced as a watcher failure instead of disappearing.
 10. Missing, failed, or unhealthy cycle only: if a later notification explicitly reports one of those repair conditions, drain queued wakes, inspect the failure text, call `fm_watch_arm_omp`, and restart omp inside this home if the extensions are not loaded.
@@ -23,7 +23,12 @@ When this session owns supervision and away mode is not active:
 The turn-end guard on omp is structural, not advisory: `__FM_OMP_TURNEND_EXT__` answers omp's blocking `session_stop` hook, and when `bin/fm-turnend-guard.sh` returns 2 it forces one continuation carrying the guard text, bounded to one per turn by the `stop_hook_active` flag omp sets on the continuation's own stop.
 An interrupted turn never raises `session_stop`, so a supervisor-initiated interrupt is not guarded; `bin/fm-control.sh` owns that postcondition.
 
-The Pi supervision branch (`docs/pi-supervision-branch.md`) is out of scope for the omp primary: every actionable wake is delivered to this conversation, exactly as on Claude, and the lease, outcome-store, and `fm_branch_processed` contracts do not apply here.
+The Pi supervision branch (`docs/pi-supervision-branch.md`) does not apply to OMP.
+The OMP extension owns the monitor in attended, away, and quiet modes.
+With a live away/quiet daemon, it leaves routine wakes to that daemon's existing durable-queue classifier instead of sending them to this conversation.
+The daemon never launches a competing OMP monitor or types into its terminal; `bin/fm-supervise-daemon.sh` owns the native escalation transport and retained-buffer contract.
+Both attended wakes and daemon digests use custom next-turn messages, not user submissions, so the composer text, cursor, and attachments remain untouched while notifications are handled.
+Ordinary chat leaves quiet mode active; `/quiet off` uses the existing return procedure.
 
 The turn-end guard extension lives at `__FM_OMP_TURNEND_EXT__`.
 The watcher extension lives at `__FM_OMP_EXT__`.

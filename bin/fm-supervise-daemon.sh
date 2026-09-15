@@ -39,6 +39,11 @@
 #     crash/restart/missed injection is recovered on the next fm-wake-drain.sh.
 #     After a watcher cycle, the daemon handles every durable row through that
 #     drain and acknowledges it only after routing completes.
+#     OMP keeps its extension-owned monitor in both modes; this daemon consumes
+#     that monitor's durable queue instead of competing for its watcher lock.
+#     Native OMP delivery atomically publishes one state/.omp-escalation file.
+#     The extension removes it only when its custom message is consumed; while
+#     occupied, later digests stay buffered here. No OMP terminal input is sent.
 #   - Fail-safe-to-escalate: any wake the classifier cannot confidently mark
 #     routine is escalated.
 #   - Bounded wedge latency: a stale pane without a declared wait is escalated
@@ -710,7 +715,7 @@ escalate_flush() {  # <state>
   msg=$(awk 'NR>1{printf " | "} {printf "%s",$0} END{print ""}' "$buf" 2>/dev/null)
   # Single-line wrapper: no embedded newlines (inject_msg also collapses as a
   # safety net, but keeping the source single-line makes the intent explicit).
-  msg=$(printf 'Supervisor escalate (%s event(s)): %s (pre-read; re-arm not needed — watcher daemon-managed)' "$n" "$msg")
+  msg=$(printf 'Supervisor escalate (%s event(s)): %s (pre-read; re-arm not needed)' "$n" "$msg")
   if inject_msg "$msg" "$state"; then : > "$buf"; rm -f "${buf}.since" "$state/.subsuper-inject-wedged"; return 0; fi
   return 1
 }
@@ -1255,6 +1260,18 @@ inject_msg() {  # <message> [state]
   msg=$(_collapse_newlines "$msg")
   fm_operational_input_encode away-supervisor "$msg" encoded || return 1
   msg=$encoded
+  if [ "${omp_native:-0}" = 1 ]; then
+    # One daemon writes, one owning extension consumes. An occupied slot is
+    # never replaced, including during shutdown or session replacement.
+    local pending
+    [ ! -e "$state/.omp-escalation" ] || return 1
+    pending=$(mktemp "$state/.omp-escalation.XXXXXX") || return 1
+    if ! printf '%s' "$msg" > "$pending" || ! mv "$pending" "$state/.omp-escalation"; then
+      rm -f "$pending"
+      return 1
+    fi
+    return 0
+  fi
   target="${FM_SUPERVISOR_TARGET:-$FM_SUPERVISOR_TARGET_DEFAULT}"
   # BACKEND-AWARE (previously a raw `tmux display-message` pane-exists probe):
   # dispatches through bin/fm-backend.sh so a herdr supervisor pane is checked
@@ -1495,7 +1512,7 @@ handle_durable_wakes() {  # <watcher-reason> <state>
     handle_wake "$payload" "$state" || failed=1
     handled=$((handled + 1))
   done < "$out"
-  if [ "$handled" -eq 0 ]; then handle_wake "$fallback_reason" "$state" || failed=1; fi
+  if [ "$handled" -eq 0 ] && [ -n "$fallback_reason" ]; then handle_wake "$fallback_reason" "$state" || failed=1; fi
 
   ack_through=$(sed -n 's/^WAKE_ACK_REQUIRED:.*--ack-through \([0-9][0-9]*\) --recovery-generation [A-Za-z0-9._-][A-Za-z0-9._-]*$/\1/p' "$err" | tail -1)
   ack_generation=$(sed -n 's/^WAKE_ACK_REQUIRED:.*--ack-through [0-9][0-9]* --recovery-generation \([A-Za-z0-9._-][A-Za-z0-9._-]*\)$/\1/p' "$err" | tail -1)
@@ -1653,6 +1670,11 @@ fm_super_main() {
   afk_active "$STATE" && afk_status="on"
   log "daemon starting (pid $$); target=$TARGET; target_source=$target_source; backend=$BACKEND; backend_source=$backend_source; afk=$afk_status; inject_skip='${FM_INJECT_SKIP:-$INJECT_SKIP_DEFAULT}'; stale_escalate=${FM_STALE_ESCALATE_SECS:-$STALE_ESCALATE_SECS_DEFAULT}s; batch=${FM_ESCALATE_BATCH_SECS:-$ESCALATE_BATCH_SECS_DEFAULT}s"
   migrate_watcher_pause_markers "$STATE"
+  local omp_native=0
+  if fm_omp_extension_owns_supervision "$STATE" "$FM_ROOT"; then
+    omp_native=1
+    log "OMP extension owns the monitor; daemon owns durable wake classification and native digest publication"
+  fi
 
   # --- shutdown: flush buffered escalations, reap child, release lock -------
   local WATCHER_PID="" CUR_TMP=""
@@ -1702,6 +1724,19 @@ fm_super_main() {
 
   local rc reason
   while true; do
+    if [ "$omp_native" -eq 1 ]; then
+      # Stay on this transport across an OMP session replacement. Never fall
+      # back to typing into a shell or launch a competing monitor in the gap.
+      if [ -s "$STATE/.wake-queue" ]; then
+        handle_durable_wakes "" "$STATE" || log "durable wake handling deferred; queue retained"
+      fi
+      if [ "$(_file_age "$STATE/.subsuper-last-housekeep")" -ge "${FM_HOUSEKEEPING_TICK:-$HOUSEKEEPING_TICK_DEFAULT}" ]; then
+        _now > "$STATE/.subsuper-last-housekeep"
+        housekeeping "$STATE"
+      fi
+      sleep 1
+      continue
+    fi
     # --- pane-gone guard (preserved) ---------------------------------------
     # With the #29 watcher's enqueue-before-suppress, a wake is no longer
     # swallowed by running the watcher with no injection target. We still back
