@@ -2,7 +2,7 @@
 name: afk
 description: >-
   Enter the away posture when the captain invokes /afk, says they are going afk, `state/.afk-contract` or `state/.afk` exists, an incoming message starts with `FM_INJECT_MARK`, or any `state/.subsuper-*` marker is involved.
-  It reads the captain's away words back as a mandate, writes the durable away-posture record after their go, announces hold-for-return only at entry, keeps the one supervision session running in the away posture (no daemon on Pi; the daemon still delivers batched digests on the other harnesses for now), and on the first unmarked message renders the return brief from durable records before ordinary work resumes.
+  It reads the captain's away words back as a mandate, writes the durable away-posture record after their go, announces hold-for-return only at entry, keeps the one supervision session running in the away posture (no daemon on Pi or omp; the daemon still delivers batched digests on the other harnesses for now), and on the first unmarked message renders the return brief from durable records before ordinary work resumes.
 user-invocable: true
 metadata:
   internal: true
@@ -39,18 +39,20 @@ Hold-for-return is the default and the only reach profile this release records: 
    With no words, run `propose` and `confirm` back to back; the announcement is the same.
    Re-invoking `/afk` while already away with no new words is a refresh and leaves the standing record untouched; new words replace the mandate after the same read-back, preserve the original session entry, and archive the superseded mandate for the return brief.
 4. **Per harness, after the record exists:**
-   - **Pi and pi-signed**: stop here.
-     The away daemon is no longer launched on Pi; the ordinary supervision session (`docs/pi-supervision-branch.md`) keeps running with the record present, and `bin/fm-afk-launch.sh start` refuses on these harnesses.
+   - **Pi, pi-signed, and omp**: stop here.
+     The away daemon is no longer launched on Pi or omp; the ordinary supervision session keeps running with the record present, and `bin/fm-afk-launch.sh start` refuses on these harnesses.
+     On omp, quiet mode is posture-only: every actionable wake still reaches main under `docs/supervision-protocols/omp.md`, with no routine-wake batching or turn savings.
+     As on Pi, the record has no durable quiet-versus-away marker, so ordinary chat not exiting quiet mode remains a conversational rule.
    - **Harness WITH a native in-pane tracked-background tool** (claude's background bash, grok's background tool): run `bin/fm-afk-launch.sh start-native`, then run `FM_AFK_STATE_PREPARED=1 bin/fm-afk-start.sh` through that native tool.
      This is a deliberate no-separate-terminal exception because the harness-hosted job creates no terminal or layout mutation, and a shell launcher cannot invoke a harness-native background tool.
      If the native launch fails, run `bin/fm-afk-launch.sh stop` to roll back the prepared lifecycle.
      Do not wrap it in `nohup ... &` (Codex/herdr can reap fire-and-forget shell children after a tool call returns).
-   - **Every other harness** (codex, opencode, omp, kimi, cursor): run `bin/fm-afk-launch.sh start`.
+   - **Every other harness** (codex, opencode, kimi, cursor): run `bin/fm-afk-launch.sh start`.
      It is the single owner of the daemon terminal: it creates a NON-VISIBLE tracked terminal for the current backend and passes the captain pane in as `FM_SUPERVISOR_TARGET` so the daemon injects into the captain, not its own new pane (docs/herdr-backend.md "Away-mode supervisor support").
    Both daemon paths require the already-confirmed record and share `bin/fm-afk-start.sh` as the daemon entry.
    The daemon is **presence-gated**: it injects escalations only while `state/.afk` exists, and stays quiet otherwise.
 5. **Do not separately arm `fm-watch.sh` where the daemon runs.** The daemon manages the watcher as its child; the singleton lock no-ops a stray arm harmlessly.
-   On Pi nothing changes about arming: the supervision session's own cycle continues.
+   On Pi and omp nothing changes about arming: the supervision session's own cycle continues.
 
 ## While away
 
@@ -94,7 +96,7 @@ This release records clauses and does not execute them.
 
 ## The daemon, where it still runs
 
-On the harnesses that still launch the daemon (every verified harness except Pi and pi-signed), the mechanics below are unchanged.
+On the harnesses that still launch the daemon (every verified harness except Pi, pi-signed, and omp), the mechanics below are unchanged.
 
 ### Operational prefix contract
 
