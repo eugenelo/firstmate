@@ -1734,6 +1734,7 @@ fm_super_main() {
         _now > "$STATE/.subsuper-last-housekeep"
         housekeeping "$STATE"
       fi
+      trim_log
       sleep 1
       continue
     fi

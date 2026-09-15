@@ -26,6 +26,28 @@ TMP_ROOT=$(fm_test_tmproot fm-daemon-tests)
 FM_DAEMON_PRIMARY_HARNESS=claude
 export FM_DAEMON_PRIMARY_HARNESS
 
+test_handling_confirmation_after_daemon_ack() {
+  local dir marker kind generation completed
+  . "$ROOT/bin/fm-wake-lib.sh"
+  dir=$(make_supercase handling-after-ack)
+  marker="$dir/state/.watcher-down"
+  for kind in downtime handling; do
+    fm_recovery_marker_publish "$marker" "$kind" || fail "recovery publication failed"
+    fm_recovery_marker_snapshot "$marker" || fail "recovery snapshot failed"
+    generation=${FM_RECOVERY_MARKER_TOKEN##*:}
+    fm_recovery_marker_ack "$marker" "$generation" || fail "daemon acknowledgement failed"
+    completed=$(cat "$marker")
+    fm_recovery_marker_begin_handling "$marker" "$generation" \
+      || fail "late handling confirmation rejected an acknowledged generation"
+    [ "$(cat "$marker")" = "$completed" ] || fail "late confirmation reopened completed recovery"
+    if fm_recovery_marker_begin_handling "$marker" "other-$generation"; then
+      fail "handling confirmation accepted a different generation"
+    fi
+    [ "$(cat "$marker")" = "$completed" ] || fail "stale confirmation changed completed recovery"
+  done
+  pass "handling confirmation accepts completed matching generations without reopening recovery"
+}
+
 test_omp_native_digest_preserves_pending_delivery() {
   local dir state omp_native=1 first
   dir=$(make_supercase omp-native-digest)
@@ -2933,4 +2955,5 @@ test_inject_msg_herdr_pane_gone_defers
 test_inject_msg_herdr_submits_through_backend_dispatch
 test_inject_msg_defers_on_dead_shell_unknown
 test_inject_msg_defers_on_unrecognized_composer_state
+test_handling_confirmation_after_daemon_ack
 test_omp_native_digest_preserves_pending_delivery

@@ -699,7 +699,7 @@ _fm_recovery_marker_begin_handling() {
     return 3
   fi
   case "$line" in
-    pending:handling:*|announced:handling:*) ;;
+    pending:handling:*|announced:handling:*|acked:handling:*|acked:downtime:*) ;;
     pending:downtime:*)
       if ! _fm_recovery_marker_write_locked "$marker" handling "$generation"; then
         fm_lock_release "$lock"
