@@ -158,7 +158,7 @@ Forbidden, destructive, irreversible, and security-sensitive actions are never p
 The record's presence is the posture on every harness, `bin/fm-afk-launch.sh` owns entry and exit, and `bin/fm-afk-return.sh` archives the record and renders the return brief (supervisor health first, then the recorded clauses, what waits on the captain, what could not be fixed, what was handled, and cost) from the outcome store, the held set, and the status logs.
 While the record exists neither supervisor rechecks an item held for the captain, and a declared external wait names when it clears with `until` for a condition-aware recheck in both postures that occurs at the declared time or the hours-long `FM_PAUSE_RESURFACE_SECS` bound, whichever comes first.
 This release records clauses and does not execute them.
-On Pi and pi-signed the away daemon is no longer launched: the ordinary supervision session continues under the record.
+On Pi, pi-signed, and omp the away daemon is no longer launched: the ordinary supervision session continues under the record.
 A presence-gated sub-supervisor (`bin/fm-supervise-daemon.sh`) still extends this for walk-away supervision on the other harnesses: the `/afk` skill starts it through the tracked foreground helper `bin/fm-afk-start.sh` once the record exists, after which the watcher reverts to daemon-managed one-shot mode and the daemon self-handles routine wakes in bash.
 The watcher and daemon share `bin/fm-classify-lib.sh` for captain-relevant status verbs, declared-wait vocabulary (a `paused:` external wait and a verified `captain-held` transfer alike, through one combined predicate), and status-scan primitives.
 Terminal verbs remain captain-relevant, while a nonterminal progress verb cannot become terminal merely because its prose contains a legacy free-text token such as `merged`; bare legacy free-text lines remain compatible.
@@ -458,4 +458,4 @@ Use `/stow` before an intentional reset when the conversation may hold durable k
 ## Development notes
 
 The current watcher reliability work combines always-on bash triage with a durable queue for actionable wakes, generation-bound post-handling acknowledgement, deterministic re-arm recovery after watcher downtime, a race-proof singleton lock, duplicate self-eviction, drain-time liveness assertion, and a self-verifying tracked-child arm wrapper.
-The away posture is the record `bin/fm-afk-contract.sh` owns; on the harnesses other than Pi the presence-gated sub-supervisor (`bin/fm-supervise-daemon.sh`) still provides walk-away delivery via the `/afk` skill while reusing the same shared wake classifier as the always-on watcher.
+The away posture is the record `bin/fm-afk-contract.sh` owns; on the harnesses other than Pi, pi-signed, and omp the presence-gated sub-supervisor (`bin/fm-supervise-daemon.sh`) still provides walk-away delivery via the `/afk` skill while reusing the same shared wake classifier as the always-on watcher.

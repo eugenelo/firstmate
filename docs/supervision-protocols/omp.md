@@ -1,6 +1,6 @@
 Mode: omp (Oh My Pi) extension background wake.
 
-When this session owns supervision and away mode is not active:
+When this session owns supervision and no legacy away daemon flag is active:
 1. Drain first with `bin/fm-wake-drain.sh`.
    After handling all emitted wakes and reconciling open decisions and unread status lines, run the exact `--ack-through` command printed as `WAKE_ACK_REQUIRED`; until then the work remains durable for idempotent re-handling after interruption.
 2. Confirm the omp primary auto-loaded both project extensions from `.omp/extensions/`; omp has no project-trust gate, so a plain `omp` started with this home as its working directory loads them with no dialog.
@@ -24,6 +24,7 @@ The turn-end guard on omp is structural, not advisory: `__FM_OMP_TURNEND_EXT__` 
 An interrupted turn never raises `session_stop`, so a supervisor-initiated interrupt is not guarded; `bin/fm-control.sh` owns that postcondition.
 
 The Pi supervision branch (`docs/pi-supervision-branch.md`) is out of scope for the omp primary: every actionable wake is delivered to this conversation, exactly as on Claude, and the lease, outcome-store, and `fm_branch_processed` contracts do not apply here.
+The away daemon is never launched on omp; the ordinary supervision session continues under the posture record, with posture-only quiet mode as defined by the `/afk` skill.
 
 The turn-end guard extension lives at `__FM_OMP_TURNEND_EXT__`.
 The watcher extension lives at `__FM_OMP_EXT__`.
