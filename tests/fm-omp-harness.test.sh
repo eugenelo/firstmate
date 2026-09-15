@@ -582,13 +582,15 @@ test_watch_quiet_delivery_and_replacement() {
 #!/usr/bin/env bash
 if [ "${1:-}" = --handling-delivered ]; then exit 0; fi
 printf '%s\n' "$$" >> "$FM_HOME/arms"
+if [ -f "$FM_HOME/fail-successors" ]; then exit 1; fi
 printf 'watcher: started pid=%s (beacon fresh)\n' "$$"
 while [ ! -f "$FM_HOME/trigger" ]; do sleep 0.1; done
 cat "$FM_HOME/trigger"
 rm "$FM_HOME/trigger"
 SH
   chmod +x "$repo/bin/fm-watch-arm.sh"
-  out=$(FM_HOME="$home" FM_ROOT_OVERRIDE="$repo" EXT="$repo/.omp/extensions/fm-primary-omp-watch.ts" \
+  out=$(FM_WATCH_REARM_RETRY_BASE_MS=10 FM_WATCH_REARM_RETRY_MAX_MS=10 FM_WATCH_REARM_RETRY_LIMIT=2 \
+    FM_HOME="$home" FM_ROOT_OVERRIDE="$repo" EXT="$repo/.omp/extensions/fm-primary-omp-watch.ts" \
     node --input-type=module 2>&1 <<'EOF'
 import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -646,6 +648,16 @@ await waitFor(() => sent.length === 3);
 if (!sent[2].message.content.includes("synthetic failure")) throw new Error("quiet exit lost the next actionable wake");
 if (arms() !== prior + 1) throw new Error("quiet exit did not preserve one successor");
 await handlers.get("message_start")({ message: { role: "custom", ...sent[2].message } });
+writeFileSync(`${state}/.afk`, "quiet\n");
+writeFileSync(`${home}/fail-successors`, "");
+const beforeFailure = arms();
+writeFileSync(`${home}/trigger`, "heartbeat\n");
+await waitFor(() => sent.length === 4);
+if (!sent[3].message.content.includes("could not restore watcher continuity after 2 retries")) {
+  throw new Error("quiet mode suppressed the restoration failure");
+}
+if (arms() !== beforeFailure + 3) throw new Error("restoration did not exhaust the configured retries");
+await handlers.get("message_start")({ message: { role: "custom", ...sent[3].message } });
 await handlers.get("session_shutdown")({});
 EOF
 )

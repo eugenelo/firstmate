@@ -708,7 +708,9 @@ export default function (pi: ExtensionAPI) {
             return;
           }
           const message = restoration.failure ? `${pending.message}\n\n${restoration.failure}` : pending.message;
-          const delivered = await deliverActionableWake(owner, message, pending, restoration.recovery);
+          const delivered = restoration.failure
+            ? await sendWake(owner, message, pending)
+            : await deliverActionableWake(owner, message, pending, restoration.recovery);
           if (!delivered) {
             settleClaim("failed");
             releaseClaim();
