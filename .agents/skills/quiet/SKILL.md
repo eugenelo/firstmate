@@ -18,16 +18,16 @@ This skill is a thin wrapper.
 Every mechanism below - the daemon, its injection, its busy/composer guards,
 its classification policy, its reliability properties - is owned once by the
 `afk` skill and is IDENTICAL in quiet mode; nothing here restates it.
-The only things quiet mode changes are which mode the flag declares and what
-exits it.
+Quiet mode's entry and exit differences are defined below.
 
 ## What it does
 
 1. **Enter through `bin/fm-afk-launch.sh` with `FM_AFK_MODE=quiet`.**
    Follow the daemon launch choice in the `afk` skill's "Entering" step 4, setting `FM_AFK_MODE=quiet` on `start` or `start-native`.
-   Quiet mode needs no away-posture proposal or confirmation: the captain is present, and the launcher writes only the quiet flag.
+   Quiet mode needs no away-posture proposal or confirmation because the captain is present.
+   The launcher writes the quiet flag without creating an away mandate.
    A bare refresh preserves the current mode.
-   On OMP, the extension retains its monitor and the daemon consumes its durable queue; see `docs/supervision-protocols/omp.md`.
+   For OMP monitor ownership and delivery, see `docs/supervision-protocols/omp.md`.
 
 2. **Acknowledge** in `AGENTS.md` section 9 language: "Captain, quiet mode is
    active; I will batch routine updates and surface only decisions, failures,
