@@ -117,6 +117,44 @@ unit_extension_harnesses_never_launch_the_daemon() {
   done
 }
 
+unit_extension_quiet_lifecycle() {
+  local st harness command out
+  for harness in pi pi-signed omp; do
+    st=$(mktemp -d "${TMPDIR:-/tmp}/fm-quiet-extension.XXXXXX")
+    mkdir -p "$st/state"
+    for command in start start-native; do
+      out=$(FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" FM_AFK_MODE=quiet \
+        bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main "$2"' _ "$LAUNCH" "$command" 2>&1) \
+        || fail "$harness: quiet $command failed: $out"
+      [ "$(read_mode "$st/state")" = quiet ] || fail "$harness: quiet mode was not durable"
+      [ ! -e "$st/state/.afk-contract" ] && [ ! -e "$st/state/.afk-daemon-terminal" ] \
+        || fail "$harness: quiet entry created an away record or daemon"
+    done
+    FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" \
+      bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main start' _ "$LAUNCH" \
+      >/dev/null 2>&1 || fail "$harness: bare quiet refresh failed"
+    [ "$(read_mode "$st/state")" = quiet ] || fail "$harness: refresh reset quiet"
+    FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" "$LAUNCH" stop >/dev/null 2>&1 \
+      || fail "$harness: quiet stop failed"
+    [ ! -e "$st/state/.afk" ] || fail "$harness: quiet stop retained the flag"
+    : > "$st/state/.afk-return-catchup"
+    if FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" FM_AFK_MODE=quiet \
+      bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main start' _ "$LAUNCH" >/dev/null 2>&1; then
+      fail "$harness: quiet entry bypassed the pending return"
+    fi
+    [ ! -e "$st/state/.afk" ] || fail "$harness: refused entry changed the posture"
+    rm "$st/state/.afk-return-catchup"
+    printf 'away\n%s\n' "$(date +%s)" > "$st/state/.afk"
+    if FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" FM_AFK_MODE=quiet \
+      bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main start' _ "$LAUNCH" >/dev/null 2>&1; then
+      fail "$harness: quiet entry bypassed a legacy away return"
+    fi
+    [ "$(read_mode "$st/state")" = away ] || fail "$harness: refused quiet entry changed away mode"
+    rm -rf "$st"
+    pass "$harness: quiet enters without away consent, refreshes durably, exits, and respects pending return"
+  done
+}
+
 unit_daemon_entry_requires_confirmation() {
   local st out rc
   st=$(mktemp -d "${TMPDIR:-/tmp}/fm-afk-entry-record.XXXXXX")
@@ -1197,6 +1235,7 @@ unit_fresh_vs_refresh
 unit_mode_explicit_write
 unit_mode_fresh_defaults_away
 unit_mode_refresh_preserves_quiet
+unit_extension_quiet_lifecycle
 unit_mode_garbage_and_legacy_content_reads_away
 unit_stop_ordering
 unit_stop_rejects_reused_pid

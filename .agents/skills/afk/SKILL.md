@@ -40,9 +40,8 @@ Hold-for-return is the default and the only reach profile this release records: 
    Re-invoking `/afk` while already away with no new words is a refresh and leaves the standing record untouched; new words replace the mandate after the same read-back, preserve the original session entry, and archive the superseded mandate for the return brief.
 4. **Per harness, after the record exists:**
    - **Pi, pi-signed, and omp**: stop here.
-     The away daemon is no longer launched on Pi or omp; the ordinary supervision session keeps running with the record present, and `bin/fm-afk-launch.sh start` refuses on these harnesses.
-     On omp, quiet mode is posture-only: every actionable wake still reaches main under `docs/supervision-protocols/omp.md`, with no routine-wake batching or turn savings.
-     As on Pi, the record has no durable quiet-versus-away marker, so ordinary chat not exiting quiet mode remains a conversational rule.
+     The away daemon is no longer launched on Pi or omp; the ordinary supervision session keeps running with the record present, and away-mode `bin/fm-afk-launch.sh start` refuses on these harnesses.
+     Quiet entry and its durable chat-persistence rule are owned by the `quiet` skill, not the away-record flow.
    - **Harness WITH a native in-pane tracked-background tool** (claude's background bash, grok's background tool): run `bin/fm-afk-launch.sh start-native`, then run `FM_AFK_STATE_PREPARED=1 bin/fm-afk-start.sh` through that native tool.
      This is a deliberate no-separate-terminal exception because the harness-hosted job creates no terminal or layout mutation, and a shell launcher cannot invoke a harness-native background tool.
      If the native launch fails, run `bin/fm-afk-launch.sh stop` to roll back the prepared lifecycle.
