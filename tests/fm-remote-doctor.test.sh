@@ -779,6 +779,35 @@ assert_contains "$DOCTOR_OUT" 'check herdr-server=ok:' "the started server was n
 [ ! -s "$CASE_LAUNCHCTL_LOG" ] || fail "the linux path invoked launchctl"
 pass "a non-darwin host skips launch agents and starts its herdr server directly"
 
+# OMP alone must satisfy agent eligibility without hiding other missing tools.
+new_case Linux with-herdr no-gui
+mv "$CASE_BIN/claude" "$CASE_BIN/omp"
+doctor --fix
+expect_code 0 "$DOCTOR_RC" "an OMP-only installation did not satisfy readiness"
+assert_contains "$DOCTOR_OUT" "required harness=omp:$CASE_BIN/omp" \
+  "readiness did not resolve the sole installed harness"
+rm -f "$CASE_BIN/treehouse"
+doctor
+expect_code 1 "$DOCTOR_RC" "OMP eligibility bypassed a missing required tool"
+assert_contains "$DOCTOR_OUT" 'required treehouse=MISSING' \
+  "OMP readiness hid the missing required tool"
+pass "OMP alone satisfies agent readiness but cannot bypass required tools"
+
+# The same eligibility list drives managed-tool repair, not just PATH probing.
+new_case Linux with-herdr no-gui
+MANAGER_BIN="$CASE_HOME/.nvm/versions/node/v24/bin"
+mkdir -p "$MANAGER_BIN"
+mv "$CASE_BIN/claude" "$MANAGER_BIN/omp"
+doctor
+expect_code 1 "$DOCTOR_RC" "an unresolved managed OMP was reported ready"
+assert_contains "$DOCTOR_OUT" 'required harness=MISSING' \
+  "readiness silently accepted an agent outside the worker PATH"
+doctor --fix
+expect_code 0 "$DOCTOR_RC" "--fix did not make the sole managed OMP available"
+assert_contains "$DOCTOR_OUT" "required harness=omp:$CASE_HOME/.local/bin/omp" \
+  "the repaired worker PATH did not resolve OMP"
+pass "readiness repair discovers OMP when it is the only managed harness"
+
 # --- --fix may add only owned wrappers for version-manager tools -------------
 
 new_case Linux with-herdr no-gui
