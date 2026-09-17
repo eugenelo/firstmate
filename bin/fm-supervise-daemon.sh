@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # fm-supervise-daemon.sh — presence-gated sub-supervisor (closes #27's P2).
 #
-# Wraps bin/fm-watch.sh: runs it as a child, presents and classifies every
-# durable wake after an actionable close, acknowledges only after routing, and
+# Presents and classifies durable wakes from bin/fm-watch.sh, acknowledges
+# only after routing, and
 # either SELF-HANDLES the routine majority in bash (no firstmate turn) or
 # ESCALATES a batched, distilled digest to the supervisor pane on
 # captain-relevant events plus bounded declared-wait rechecks. This is the
@@ -15,7 +15,7 @@
 # PRESENCE-GATING (the /afk contract). The daemon is the away-mode engine: it
 # injects ONLY when the durable away-mode flag state/.afk is present. Invoking
 # the /afk skill sets that flag and starts this daemon; any real (unmarked)
-# user message clears it and firstmate resumes full responsiveness.
+# user message exits away mode. Quiet-mode exit is owned by the /quiet skill.
 # When afk is off, normal fm-watch.sh always-on triage is the active mechanism.
 # Any buffered daemon escalations that remain while afk is off survive in
 # state/.subsuper-escalations and are flushed on the next "while you were out"
@@ -27,20 +27,19 @@
 # keyboard at the start of a message, and Herdr transports it as text.
 # Firstmate's contract: a message that starts with the current prefix, or a
 # legacy bare-marker daemon escalation, is internal (stay afk); an unmarked
-# message means the captain is back (exit afk, flush catch-up, resume per-wake
-# responsiveness). The prefix and busy-guard solve the same problem - the
-# daemon and the human share one input channel - so they live together under
-# /afk.
+# message in away mode means the captain is back (exit afk, flush catch-up,
+# resume per-wake responsiveness). See /afk for terminal busy guards and the
+# native OMP transport below for delivery without terminal input.
 #
 # Reliability model (see the /afk skill):
 #   - Nothing is lost in away mode: while state/.afk exists, the watcher reverts
-#     to daemon-owned one-shot behavior and enqueues every wake to
+#     to one-shot behavior and enqueues every wake to
 #     state/.wake-queue BEFORE advancing its suppression markers, so a
 #     crash/restart/missed injection is recovered on the next fm-wake-drain.sh.
 #     After a watcher cycle, the daemon handles every durable row through that
 #     drain and acknowledges it only after routing completes.
-#     OMP keeps its extension-owned monitor in both modes; this daemon consumes
-#     that monitor's durable queue instead of competing for its watcher lock.
+#     docs/supervision-protocols/omp.md owns OMP monitor ownership; on other
+#     daemon-backed harnesses this daemon runs the watcher as its child.
 #     Native OMP delivery atomically publishes one state/.omp-escalation file.
 #     The extension removes it only when its custom message is consumed; while
 #     occupied, later digests stay buffered here. No OMP terminal input is sent.

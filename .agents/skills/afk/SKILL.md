@@ -46,8 +46,9 @@ Hold-for-return is the default and the only reach profile this release records: 
      If the native launch fails, run `bin/fm-afk-launch.sh stop` to roll back the prepared lifecycle.
      Do not wrap it in `nohup ... &` (Codex/herdr can reap fire-and-forget shell children after a tool call returns).
    - **Every other harness** (codex, opencode, omp, kimi, cursor): run `bin/fm-afk-launch.sh start`.
-     It is the single owner of the daemon terminal: it creates a NON-VISIBLE tracked terminal for the current backend and passes the captain pane in as `FM_SUPERVISOR_TARGET` so the daemon injects into the captain, not its own new pane (docs/herdr-backend.md "Away-mode supervisor support").
-   Both daemon paths require the already-confirmed record and share `bin/fm-afk-start.sh` as the daemon entry.
+     It is the single owner of the daemon terminal: it creates a NON-VISIBLE tracked terminal for the current backend and passes the captain pane in as `FM_SUPERVISOR_TARGET` for terminal delivery (docs/herdr-backend.md "Away-mode supervisor support"); OMP delivery follows `docs/supervision-protocols/omp.md`.
+   Both away-mode daemon paths require the already-confirmed record and share `bin/fm-afk-start.sh` as the daemon entry.
+   Quiet entry follows the `quiet` skill instead.
    The daemon is **presence-gated**: it injects escalations only while `state/.afk` exists, and stays quiet otherwise.
 5. **Do not separately arm `fm-watch.sh` where the daemon runs.**
    OMP retains its extension-owned monitor under `docs/supervision-protocols/omp.md`; other daemon-backed harnesses use the daemon's watcher child.
