@@ -1,0 +1,10 @@
+$ bin/fm-remote-secondmate-control.sh launch probe omp - low tmux
+error: a remote secondmate runs only on the herdr backend, not 'tmux'
+exit=1
+$ bin/fm-remote-secondmate-control.sh launch probe unsupported - low herdr
+error: unverified remote secondmate harness: unsupported
+exit=1
+$ bin/fm-remote-secondmate-control.sh relaunch probe unsupported - low
+error: unverified remote secondmate harness: unsupported
+exit=1
+No endpoint metadata created by refused commands.

@@ -1,0 +1,30 @@
+OMP-only tools available
+$ bin/fm-remote-doctor.sh --worker-tool-probe
+required git=/usr/bin/git
+required jq=/usr/bin/jq
+required herdr=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/herdr
+required tasks-axi=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/tasks-axi
+required treehouse=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/treehouse
+required harness=omp:/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/omp
+exit=0
+
+OMP missing
+$ bin/fm-remote-doctor.sh --worker-tool-probe
+required git=/usr/bin/git
+required jq=/usr/bin/jq
+required herdr=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/herdr
+required tasks-axi=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/tasks-axi
+required treehouse=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/treehouse
+required harness=MISSING
+exit=1
+
+Required treehouse missing
+$ bin/fm-remote-doctor.sh --worker-tool-probe
+required git=/usr/bin/git
+required jq=/usr/bin/jq
+required herdr=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/herdr
+required tasks-axi=/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/tasks-axi
+required treehouse=MISSING
+required harness=omp:/home/elo/.no-mistakes/worktrees/36b901bffab0/01M2R3P7CAY4ZD66GMVYNV8ZAF/.test-remote-omp/home/.local/bin/omp
+exit=1
+
