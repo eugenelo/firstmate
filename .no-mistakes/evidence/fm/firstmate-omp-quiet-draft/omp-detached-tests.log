@@ -1,0 +1,10 @@
+FM_TEST_BEGIN 2026-09-17T06:06:08Z tests/fm-omp-harness.test.sh family=pure-contract-unit expected_gate_skip=none
+ok - fm-harness: omp detects by its anchored name; the marker is a precedence override that needs real omp ancestry
+ok - session lock and tmux liveness: omp is anchored, decoys stay out
+ok - fm-spawn: the omp launch line clears markers, pins posture, and wires the state-resident extension
+ok - fm-spawn: omp model validation is scoped to providers the listing can prove
+not ok - omp secondmate spawn should succeed: error: secondmate home cannot be inside the firstmate repo: /home/elo/.no-mistakes/worktrees/e29f2090ad7b/01M2PYXFME1PDBJ9ZCE76HHHKC/.test-phase-tmp/fm-omp-harness.hlsAUv/secondmate/sm: expected exit 0, got 1
+FM_TEST_END 2026-09-17T06:06:17Z tests/fm-omp-harness.test.sh exit=1 duration_ms=8901 gate_skip=false
+FM_TEST_SUMMARY total=1 failed=1 skipped_gate=0 duration_ms=8940
+FM_TEST_SUMMARY_FAMILY family=pure-contract-unit count=1 duration_ms=8901 failed=1
+FM_TEST_SLOWEST rank=1 script=tests/fm-omp-harness.test.sh duration_ms=8901

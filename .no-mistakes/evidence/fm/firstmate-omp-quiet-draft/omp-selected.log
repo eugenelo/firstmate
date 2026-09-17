@@ -1,0 +1,2 @@
+ok - .omp watch extension: fm_watch_arm_omp arms once, repeats as a no-op, and delivers an actionable close as one follow-up
+ok - OMP keeps one monitor in quiet mode and replays unconsumed native digests across replacement

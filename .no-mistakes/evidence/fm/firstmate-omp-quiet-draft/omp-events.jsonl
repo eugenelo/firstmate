@@ -1,0 +1,45 @@
+{"kind":"control","id":1,"code":0,"stdout":"","stderr":"fm-afk-launch: daemon launched in non-visible herdr workspace w2 (pane fm-lab-omp-quiet-draft-946849-13424:w2:p1), supervising fm-lab-omp-quiet-draft-946849-13424:w1:p1\n"}
+{"kind":"control","id":2,"code":0,"stdout":"","stderr":"fm-afk-launch: daemon already running; refreshed away-mode flag (no new terminal)\n"}
+{"kind":"snapshot","id":3,"draft":" #1 "}
+{"kind":"snapshot","id":4,"draft":" #1 \ndraft alpha\ndraft omega"}
+{"kind":"control","id":5,"code":0,"stdout":"","stderr":""}
+{"kind":"snapshot","id":6,"draft":" #1 \ndraft alpha\ndraft omega"}
+{"kind":"message","role":"custom","text":"⁣FIRSTMATE_OP: v1 away-supervisor: Supervisor escalate (1 event(s)): approval.status: blocked: synthetic approval action (pre-read; re-arm not needed)","images":0,"draft":" #1 \ndraft alpha\ndraft omega"}
+{"kind":"message","role":"assistant","text":"","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"toolResult","text":"# fm_lab_drain\n\nHandle the synthetic event by draining and acknowledging this isolated home.\n\n## Schema\n```ts\ntype Args = {};\n```\nExecute by writing JSON to xd://fm_lab_drain.","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"assistant","text":"","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"drain","draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"toolResult","text":"Synthetic event handled.","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"assistant","text":"HANDLED","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"settled","draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"snapshot","id":7,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"snapshot","id":8,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"custom","text":"⁣FIRSTMATE_OP: v1 away-supervisor: Supervisor escalate (1 event(s)): failure.status: blocked: synthetic failure action (pre-read; re-arm not needed)","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"assistant","text":"","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"drain","draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"toolResult","text":"Synthetic event handled.","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"assistant","text":"HANDLED","images":0,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"settled","draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"snapshot","id":9,"draft":" #1 \ndraft alpha\ndraft omXega"}
+{"kind":"message","role":"user","text":"[Image #1, 200x200] \ndraft alpha\ndraft omXega","images":1,"draft":""}
+{"kind":"snapshot","id":10,"draft":""}
+{"kind":"message","role":"assistant","text":"","images":0,"draft":""}
+{"kind":"drain","draft":""}
+{"kind":"message","role":"toolResult","text":"Synthetic event handled.","images":0,"draft":""}
+{"kind":"message","role":"assistant","text":"HANDLED","images":0,"draft":""}
+{"kind":"settled","draft":""}
+{"kind":"control","id":11,"code":0,"stdout":"","stderr":"fm-afk-launch: terminal close command failed, but exact absence was confirmed\nfm-afk-launch: away mode stopped; daemon terminal torn down, .afk cleared, and the posture record archived\n"}
+{"kind":"message","role":"custom","text":"⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal: /home/elo/.no-mistakes/worktrees/e29f2090ad7b/01M2PYXFME1PDBJ9ZCE76HHHKC/.test-phase-tmp/fm-omp-quiet-draft.smp2me/home/state/attended.status\n\nRun bin/fm-wake-drain.sh first and handle the queued wake. Watcher continuity is extension-owned.","images":0,"draft":"ordinary draft"}
+{"kind":"message","role":"assistant","text":"","images":0,"draft":"ordinary draft"}
+{"kind":"drain","draft":"ordinary draft"}
+{"kind":"message","role":"toolResult","text":"Synthetic event handled.","images":0,"draft":"ordinary draft"}
+{"kind":"message","role":"assistant","text":"HANDLED","images":0,"draft":"ordinary draft"}
+{"kind":"settled","draft":"ordinary draft"}
+{"kind":"snapshot","id":12,"draft":"ordinary draft"}
+{"kind":"message","role":"user","text":"ordinary draft","images":0,"draft":""}
+{"kind":"snapshot","id":13,"draft":""}
+{"kind":"message","role":"assistant","text":"","images":0,"draft":""}
+{"kind":"drain","draft":""}
+{"kind":"message","role":"toolResult","text":"Synthetic event handled.","images":0,"draft":""}
+{"kind":"message","role":"assistant","text":"HANDLED","images":0,"draft":""}
+{"kind":"settled","draft":""}
