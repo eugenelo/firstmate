@@ -45,8 +45,8 @@
 #                       represented by the two digests below.
 #   6. fleet digest   - a compact data/backlog.md identity/metadata listing,
 #                       every state/*.meta, a bounded state/*.status tail,
-#                       the away posture (state/.afk-contract and the legacy
-#                       state/.afk daemon flag), and a cheap per-task
+#                       the away record and quiet/daemon flag (entry owned by
+#                       bin/fm-afk-launch.sh), and a cheap per-task
 #                       endpoint-liveness read:
 #                       read-only, always runs.
 #   7. network checks - the result of the deferred network stage started back at
