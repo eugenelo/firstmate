@@ -250,6 +250,12 @@ fm_afk_launch_extension_quiet() {
     fm_afk_launch_log "stop the recorded away daemon before entering extension-owned quiet mode"
     return 1
   fi
+  if ! fm_lock_try_acquire "$FM_AFK_LOCK"; then
+    fm_afk_launch_log "daemon lock is still held or initializing; quiet entry refused"
+    return 1
+  fi
+  fm_lock_release "$FM_AFK_LOCK"
+  [ ! -e "$FM_AFK_LOCK" ] && [ ! -L "$FM_AFK_LOCK" ] || return 1
   fm_afk_flag_write "$FM_AFK_LAUNCH_STATE" quiet || return 1
   fm_afk_launch_log "quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode"
 }
