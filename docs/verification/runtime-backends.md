@@ -2065,3 +2065,42 @@ A throwaway scout was spawned through `bin/fm-spawn.sh --scout --harness omp --m
 6. `bin/fm-control.sh <id> exit` stopped the agent and `bin/fm-teardown.sh` returned the worktree and closed the item.
 
 `FM_OMP_LIVE_E2E=1 tests/fm-omp-primary-live-e2e.test.sh` refreshes the primary evidence; the worker path above is refreshed by repeating the scout dispatch after any omp upgrade.
+
+### Remote secondmate lifecycle on Linux
+
+Verified on 2026-09-17 with Linux 6.8.0-124 x86_64, omp 18.1.19, Herdr 0.9.0, tasks-axi 0.2.4, and `openai-codex/gpt-5.5` at `low` effort.
+The real-host procedure in [remote second mates](../remote-secondmates.md#verification) used an isolated source snapshot, a disposable parent and remote home, and the required `fm-remote` session.
+The lifecycle account also contained Claude and Codex; a separate real OMP-only readiness demonstration used an isolated temporary `HOME` and only the actual required tools, without hiding the account's installed agents.
+
+With `FM_HOME` selecting the disposable parent, the exercised public commands included:
+
+```sh
+bin/fm-spawn.sh omp2m --secondmate
+bin/fm-on.sh omp2m fm-remote-secondmate-control.sh state omp2m
+bin/fm-on.sh omp2m fm-remote-secondmate-control.sh observe omp2m
+bin/fm-on.sh omp2m fm-remote-secondmate-control.sh relaunch omp2m omp openai-codex/gpt-5.5 low
+bin/fm-procevent.sh start remote-reply-omp2m
+bin/fm-teardown.sh omp2m
+```
+
+The state and observation commands returned `alive` and `idle`.
+Two marked requests sent through `bin/fm-send.sh` produced correlated replies mirrored into the parent and resolved their pending-reply records.
+The first request created a unique marker in the remote home; the post-relaunch request returned the same marker.
+Both OMP extensions auto-loaded without explicit `-e` arguments, and the agent handled and acknowledged a delivered supervision notification.
+The running OMP process and its start time remained unchanged across abrupt disconnections of separate SSH sessions with and without a PTY.
+Relaunch replaced the OMP process while preserving its endpoint, home, model, and effort; both extensions and monitoring restarted.
+Re-spawning the live secondmate created no duplicate.
+Invalid-harness relaunch and non-Herdr placement were refused without disturbing the running agent.
+Guarded retirement removed only the disposable agent and home, and the Herdr lab reported `TRIPWIRE OK: default session unchanged`.
+The account's entrypoint and remote job worker were restored to their original code root, followed by a successful read-only readiness check.
+
+The OMP-only check invoked the doctor's entrypoint bootstrap form, `/usr/bin/env -i PATH=<child-path> HOME=<isolated-home> FM_HOME=<test-home> FM_ROOT_OVERRIDE=<snapshot-root> FM_REMOTE_DOCTOR_BOOTSTRAP=1 <snapshot-root>/bin/fm-remote-doctor.sh`, with and without `--fix`.
+The delivered `fm-remote-job-lib.sh` composed the child PATH; the isolated home's tool directory contained symlinks to the real Herdr, tasks-axi, treehouse, and OMP executables.
+All other accepted agents were absent from that PATH, and the OMP executable matched the installed binary and reported `omp/18.1.19`.
+After repair, the read-only doctor returned `required harness=omp:...`, `check remote-job-probe=ok: the remote job worker completed the required-tool probe`, and `ok: remote second-mate readiness confirmed on this host`, with exit 0.
+Removing only the isolated OMP symlink produced `required harness=MISSING` and exit 1; restoring it returned readiness to green.
+The isolated worker and Herdr server used state and sockets under that temporary HOME, and cleanup left the existing account services unchanged.
+This validates the real doctor and worker probe in an OMP-only environment, not alternate-HOME routing through SSH: the fixed SSH entrypoint intentionally resolves the account home from its login identity.
+
+`tests/fm-remote-secondmate-lifecycle-e2e.test.sh` provides deterministic coverage for the launch/relaunch and refusal contracts.
+Repeat the real-host procedure after OMP or remote-lifecycle changes; fixture coverage does not establish vendor process or extension behavior.

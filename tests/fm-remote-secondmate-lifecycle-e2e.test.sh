@@ -97,6 +97,18 @@ SH
 chmod +x "$REMOTE_ROOT/bin/tmux"
 install_remote_herdr_fixture "$REMOTE_ROOT" "$HERDR_STATE" "$HERDR_LOG" \
   "$TMP_ROOT/herdr-send-fail" "$TMP_ROOT/herdr.sock"
+# Catalog fixture only: Herdr below models endpoint lifecycle, not a running
+# vendor OMP. Real extension loading and SSH survival require the live Show.
+cat > "$REMOTE_ROOT/bin/omp" <<'SH'
+#!/usr/bin/env bash
+case "${1:-}:${2:-}" in
+  models:--json)
+    printf '{"models":[{"provider":"openai-codex","id":"gpt-6-astra","selector":"openai-codex/gpt-6-astra"}]}\n'
+    ;;
+  *) exit 1 ;;
+esac
+SH
+chmod +x "$REMOTE_ROOT/bin/omp"
 git -C "$REMOTE_ROOT" init -q -b main
 git -C "$REMOTE_ROOT" config user.email test@example.com
 git -C "$REMOTE_ROOT" config user.name Test
@@ -1087,6 +1099,50 @@ cp "$TMP_ROOT/ios-before-relaunch.meta" "$RELAUNCH_ROUTE_META"
 [ "$(remote_env "$ROOT/bin/fm-on.sh" ios fm-remote-secondmate-control.sh state ios)" = alive ] \
   || fail "a refused remote restart must leave the running agent untouched"
 pass "the remote restart verb delegates to the host-local control plane and refuses before stopping anything"
+
+# Keep the Codex lifecycle above intact, then exercise OMP through both public
+# parent commands. Closing the old fixture pane models a missing endpoint;
+# clearing registration later models an exited agent in a retained pane.
+omp_route_meta="$REMOTE_HOME/state/parent-route/ios.meta"
+old_pane=$(sed -n 's/^herdr_pane_id=//p' "$omp_route_meta")
+"$REMOTE_ROOT/bin/herdr" pane close "$old_pane" --session fm-remote
+printf 'omp openai-codex/gpt-6-astra medium\n' > "$PARENT/config/secondmate-harness"
+out=$(remote_env "$ROOT/bin/fm-spawn.sh" ios --secondmate 2>&1) \
+  || fail "parent remote OMP launch failed: $out"
+for meta in "$PARENT/state/ios.meta" "$omp_route_meta"; do
+  assert_grep 'harness=omp' "$meta" "OMP launch did not publish its harness"
+  assert_grep 'model=openai-codex/gpt-6-astra' "$meta" "OMP launch lost its model"
+  assert_grep 'effort=medium' "$meta" "OMP launch lost its effort"
+done
+assert_grep "worktree=$REMOTE_HOME" "$omp_route_meta" "OMP launch changed its persistent home"
+assert_grep 'remote_herdr_session=fm-remote' "$PARENT/state/ios.meta" \
+  "OMP launch escaped the required remote Herdr session"
+[ "$(remote_env "$ROOT/bin/fm-on.sh" ios fm-remote-secondmate-control.sh state ios)" = alive ] \
+  || fail "OMP launch did not produce a live fixture endpoint"
+omp_pane=$(sed -n 's/^herdr_pane_id=//p' "$omp_route_meta")
+printf 'retained OMP home state\n' > "$REMOTE_HOME/state/omp-continuity"
+jq --arg pane "$omp_pane" \
+  'del(.typed[$pane], .working[$pane])' "$HERDR_STATE" > "$TMP_ROOT/herdr-stopped.json"
+mv "$TMP_ROOT/herdr-stopped.json" "$HERDR_STATE"
+[ "$(remote_env "$ROOT/bin/fm-on.sh" ios fm-remote-secondmate-control.sh state ios)" = dead ] \
+  || fail "the stopped OMP fixture was not positively classified dead"
+out=$(remote_env "$ROOT/bin/fm-on.sh" ios fm-remote-secondmate-control.sh \
+  relaunch ios omp openai-codex/gpt-6-astra medium 2>&1) \
+  || fail "routed remote OMP relaunch failed: $out"
+[ "$(remote_env "$ROOT/bin/fm-on.sh" ios fm-remote-secondmate-control.sh state ios)" = alive ] \
+  || fail "OMP relaunch did not restore a live fixture endpoint"
+for meta in "$PARENT/state/ios.meta" "$omp_route_meta"; do
+  assert_grep 'harness=omp' "$meta" "OMP relaunch changed its harness"
+  assert_grep 'model=openai-codex/gpt-6-astra' "$meta" "OMP relaunch lost its model pin"
+  assert_grep 'effort=medium' "$meta" "OMP relaunch lost its effort pin"
+done
+[ "$(sed -n 's/^herdr_pane_id=//p' "$omp_route_meta")" = "$omp_pane" ] \
+  || fail "OMP relaunch replaced rather than reused its retained endpoint"
+[ "$(cat "$REMOTE_HOME/state/omp-continuity")" = 'retained OMP home state' ] \
+  || fail "OMP relaunch lost persistent home state"
+assert_grep "worktree=$REMOTE_HOME" "$omp_route_meta" "OMP relaunch moved its home"
+assert_grep 'herdr_session=fm-remote' "$omp_route_meta" "OMP relaunch changed Herdr sessions"
+pass "remote OMP launch and stopped-agent relaunch preserve home, endpoint, model, and effort"
 
 
 rm -f "$TMP_ROOT/doctor.repaired"
