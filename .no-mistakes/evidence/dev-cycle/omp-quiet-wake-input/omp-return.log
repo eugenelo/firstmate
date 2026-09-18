@@ -1,0 +1,20 @@
+WARNING: queued wakes pending - drain them with bin/fm-wake-drain.sh before anything else.
+=== Return brief (away 2026-09-18T07:50:39Z -> 2026-09-18T07:53:23Z, 2m) ===
+Supervisor health:
+  - supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+Mandate clauses:
+  (no away-posture record for this window; legacy away flag only)
+Waiting on you:
+  (nothing)
+Tried and failed, or could not be fixed:
+  (nothing)
+Handled while away:
+  (no routine outcomes recorded in the store for this window)
+Cost: 0 supervision outcome(s) recorded (0 routine, 0 captain); 1 task(s) live at return.
+catch-up health: supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+catch-up wake: OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):
+catch-up wake: draft-probe needs-decision: isolated composer preservation probe
+catch-up wake: OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'
+catch-up wake: 1789717988 4 signal draft-probe.status signal: /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status
+WAKE_ACK_REQUIRED: after handling completes run bin/fm-wake-drain.sh --ack-through 4 --recovery-generation 2395414.1789717988.ebt9g3
+fm-afk-return: catch-up clear; ordinary captain work may proceed

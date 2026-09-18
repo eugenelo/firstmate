@@ -1,0 +1,8 @@
+{
+  "quiet_flag_present": false,
+  "away_contract_present": false,
+  "daemon_record_present": false,
+  "catchup_gate_present": false,
+  "watcher_pid": 2396512,
+  "watcher_alive": true
+}

@@ -1,0 +1,42 @@
+│ … (175 earlier lines, showing 10 of 185) ⟨Ctrl+O: Expand⟩                                                            │
+│ ABSENT                                                                                                               │
+│                                                                                                                      │
+│ ================================================================================                                     │
+│ NEXT STEP                                                                                                            │
+│ ================================================================================                                     │
+│ Follow the supervision operating instructions block above for harness 'omp'.                                         │
+│ This script never starts supervision itself.                                                                         │
+│                                                                                                                      │
+│ The digest above is complete for this session start. The READ-ONCE CONTRACT                                          │
+│ section near the top of it governs what may still be read from disk.                                                 │
+│ ⟨Wall: 1.86s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  Read xd://fm_watch_arm_omp
+
+
+ • Arm firstmate watcher
+ watcher: started omp extension arm child 1; future ordinary re-arms are automatic; call fm_watch_arm_omp again only a…
+ ⟨Ctrl+O: Expand⟩
+
+
+ READY
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ FM_AFK_MODE=quiet bin/fm-afk-launch.sh start && bin/fm-afk-launch.sh start
+
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+╭───  #1 ───╮
+│            │
+│           │
+│            │
+│            │
+╰─ 200x200 ──╯
+
+❯  #1 DRAFT_ABCDEF
+ 󰵗 ·  GPT-6-Astra  · 󰪟 low ·  …5fe3b/01M2SQMJKP5Z8X3RD724WRXZWC ·  detached ?1 ·  16.0%/272K 󰁨 · 󰙺 0.65 +  󰙺 0.35
+
+cursor=19,38

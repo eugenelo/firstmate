@@ -1,0 +1,42 @@
+│ supervision elsewhere; ordinary captain chat does NOT exit it - only an explicit /quiet off does.                    │
+│ user-invocable: true                                                                                                 │
+│ metadata:                                                                                                            │
+│                                                                                                                      │
+│   internal: true                                                                                                     │
+│ … 57 more lines ⟨Ctrl+O: Expand⟩                                                                                     │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ⟨Resolved path:                                                                                                      │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/.claude/skills/quiet/SKI │
+│ LL.md⟩                                                                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-crew-state.sh draft-probe                                                                                   │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ state: unknown · source: none · worktree gone (torn down?)                                                           │
+│ ⟨Wall: 0.04s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  Read state/draft-probe.status
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh --ack-through 2 --recovery-generation 2334665.1789717865.DTPnNh                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ (no output)                                                                                                          │
+│ ⟨Wall: 0.17s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+ Captain, quiet mode remains active; ordinary chat will not exit it. Use /quiet off to restore normal updates.
+
+ The probe notification arrived, but contains no concrete question or options to decide. I have not marked it resolved.
+╭───  #1 ───╮
+│            │
+│           │
+│            │
+│            │
+╰─ 200x200 ──╯
+
+❯  #1 DRAFT_ABCXDEF
+ 󰵗 ·  GPT-6-Astra  · 󰪟 low ·  …5fe3b/01M2SQMJKP5Z8X3RD724WRXZWC ·  detached ?1 ·  16.5%/272K 󰁨 · 󰙺 0.95 +  󰙺 0.48
+
+cursor=17,38

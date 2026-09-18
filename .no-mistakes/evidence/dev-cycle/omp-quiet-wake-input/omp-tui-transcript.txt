@@ -1,0 +1,618 @@
+
+╭─── omp v18.2.5 ──────────────────────────────────────────────────────────────────────────────────╮
+│                          │ Tips                                                                  │
+│      Welcome back!       │ # for prompt actions                                                  │
+│                          │ / for commands                                                        │
+│       ████████████       │ ! to run bash                                                         │
+│          ██  ██          │ $ to run python                                                       │
+│          ██  ██          │ ───────────────────────────────────────────────────────────────────── │
+│          ▒▒  ██          │ LSP Servers                                                           │
+│              ██          │ No LSP servers                                                        │
+│                          │                                                                       │
+│       GPT-6-Astra        │                                                                       │
+│       openai-codex       │                                                                       │
+│                          │ ───────────────────────────────────────────────────────────────────── │
+│                          │ Recent sessions                                                       │
+│                          │ No recent sessions                                                    │
+│                          │                                                                       │
+│                          │                                                                       │
+│                          │                                                                       │
+│                          │                                                                       │
+╰──────────────────────────┴───────────────────────────────────────────────────────────────────────╯
+ Tip: Say `workflowz` in your message to drive the task with parallel subagents in eval — watch it
+      glow as you type
+
+
+
+ Call fm_watch_arm_omp exactly once, then reply READY. Do not run any other tools.
+
+
+
+ • Arm firstmate watcher
+ watcher: not armed - no live session holds the lock; run bin/fm-session-start.sh to reclaim it, then call fm_watch_ar…
+ ⟨Ctrl+O: Expand⟩
+
+
+ READY
+
+
+ Run bin/fm-session-start.sh to claim this isolated home, then call fm_watch_arm_omp. Reply READY only after the
+ watcher starts.
+
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-session-start.sh                                                                                            │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ … (175 earlier lines, showing 10 of 185) ⟨Ctrl+O: Expand⟩                                                            │
+│ ABSENT                                                                                                               │
+│                                                                                                                      │
+│ ================================================================================                                     │
+│ NEXT STEP                                                                                                            │
+│ ================================================================================                                     │
+│ Follow the supervision operating instructions block above for harness 'omp'.                                         │
+│ This script never starts supervision itself.                                                                         │
+│                                                                                                                      │
+│ The digest above is complete for this session start. The READ-ONCE CONTRACT                                          │
+│ section near the top of it governs what may still be read from disk.                                                 │
+│ ⟨Wall: 1.86s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  Read xd://fm_watch_arm_omp
+
+
+ • Arm firstmate watcher
+ watcher: started omp extension arm child 1; future ordinary re-arms are automatic; call fm_watch_arm_omp again only a…
+ ⟨Ctrl+O: Expand⟩
+
+
+ READY
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ FM_AFK_MODE=quiet bin/fm-afk-launch.sh start && bin/fm-afk-launch.sh start
+
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                      │
+│  firstmate-watcher-wake                                                                                             │
+│                                                                                                                      │
+│ ⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal:                                                            │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│                                                                                                                      │
+│ Run bin/fm-wake-drain.sh first and handle the queued wake. Watcher continuity is extension-owned.                    │
+│                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh                                                                                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1789717865   2   signal   draft-probe.status   needs-decision:                                                       │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│ WAKE_ACK_REQUIRED: after handling completes run bin/fm-wake-drain.sh --ack-through 2 --recovery-generation           │
+│ 2334665.1789717865.DTPnNh                                                                                            │
+│ wake annotation: latest wake-EVENT observed at drain, not current state: draft-probe.status: needs-decision:         │
+│ isolated composer preservation probe                                                                                 │
+│ OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):                         │
+│ draft-probe needs-decision: isolated composer preservation probe                                                     │
+│ OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'                      │
+│ WARNING: queued wakes pending - drain them with bin/fm-wake-drain.sh before anything else.                           │
+│ ⟨Wall: 0.76s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭─── • Read skill://quiet ─────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ────────────────────────────────────────────────────────────────────────────────                                     │
+│                                                                                                                      │
+│ name: quiet                                                                                                          │
+│ description: >-                                                                                                      │
+│   Enter quiet supervision mode when the captain invokes /quiet or asks for quiet mode, quiet-while-present, or fewer │
+│ routine wake turns while they stay in the session.                                                                   │
+│   It records durable quiet mode while preserving extension-owned supervision on Pi and omp and daemon-owned          │
+│ supervision elsewhere; ordinary captain chat does NOT exit it - only an explicit /quiet off does.                    │
+│ user-invocable: true                                                                                                 │
+│ metadata:                                                                                                            │
+│                                                                                                                      │
+│   internal: true                                                                                                     │
+│ … 57 more lines ⟨Ctrl+O: Expand⟩                                                                                     │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ⟨Resolved path:                                                                                                      │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/.claude/skills/quiet/SKI │
+│ LL.md⟩                                                                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+ Call fm_watch_arm_omp exactly once, then reply READY. Do not run any other tools.
+
+
+
+ • Arm firstmate watcher
+ watcher: not armed - no live session holds the lock; run bin/fm-session-start.sh to reclaim it, then call fm_watch_ar…
+ ⟨Ctrl+O: Expand⟩
+
+
+ READY
+
+
+ Run bin/fm-session-start.sh to claim this isolated home, then call fm_watch_arm_omp. Reply READY only after the
+ watcher starts.
+
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-session-start.sh                                                                                            │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ … (175 earlier lines, showing 10 of 185) ⟨Ctrl+O: Expand⟩                                                            │
+│ ABSENT                                                                                                               │
+│                                                                                                                      │
+│ ================================================================================                                     │
+│ NEXT STEP                                                                                                            │
+│ ================================================================================                                     │
+│ Follow the supervision operating instructions block above for harness 'omp'.                                         │
+│ This script never starts supervision itself.                                                                         │
+│                                                                                                                      │
+│ The digest above is complete for this session start. The READ-ONCE CONTRACT                                          │
+│ section near the top of it governs what may still be read from disk.                                                 │
+│ ⟨Wall: 1.86s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  Read xd://fm_watch_arm_omp
+
+
+ • Arm firstmate watcher
+ watcher: started omp extension arm child 1; future ordinary re-arms are automatic; call fm_watch_arm_omp again only a…
+ ⟨Ctrl+O: Expand⟩
+
+
+ READY
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ FM_AFK_MODE=quiet bin/fm-afk-launch.sh start && bin/fm-afk-launch.sh start
+
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                      │
+│  firstmate-watcher-wake                                                                                             │
+│                                                                                                                      │
+│ ⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal:                                                            │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│                                                                                                                      │
+│ Run bin/fm-wake-drain.sh first and handle the queued wake. Watcher continuity is extension-owned.                    │
+│                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh                                                                                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1789717865   2   signal   draft-probe.status   needs-decision:                                                       │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│ WAKE_ACK_REQUIRED: after handling completes run bin/fm-wake-drain.sh --ack-through 2 --recovery-generation           │
+│ 2334665.1789717865.DTPnNh                                                                                            │
+│ wake annotation: latest wake-EVENT observed at drain, not current state: draft-probe.status: needs-decision:         │
+│ isolated composer preservation probe                                                                                 │
+│ OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):                         │
+│ draft-probe needs-decision: isolated composer preservation probe                                                     │
+│ OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'                      │
+│ WARNING: queued wakes pending - drain them with bin/fm-wake-drain.sh before anything else.                           │
+│ ⟨Wall: 0.76s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭─── • Read skill://quiet ─────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ────────────────────────────────────────────────────────────────────────────────                                     │
+│                                                                                                                      │
+│ name: quiet                                                                                                          │
+│ description: >-                                                                                                      │
+│   Enter quiet supervision mode when the captain invokes /quiet or asks for quiet mode, quiet-while-present, or fewer │
+│ routine wake turns while they stay in the session.                                                                   │
+│   It records durable quiet mode while preserving extension-owned supervision on Pi and omp and daemon-owned          │
+│ supervision elsewhere; ordinary captain chat does NOT exit it - only an explicit /quiet off does.                    │
+│ user-invocable: true                                                                                                 │
+│ metadata:                                                                                                            │
+│                                                                                                                      │
+│   internal: true                                                                                                     │
+│ … 57 more lines ⟨Ctrl+O: Expand⟩                                                                                     │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ⟨Resolved path:                                                                                                      │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/.claude/skills/quiet/SKI │
+│ LL.md⟩                                                                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-crew-state.sh draft-probe                                                                                   │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ state: unknown · source: none · worktree gone (torn down?)                                                           │
+│ ⟨Wall: 0.04s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  Read state/draft-probe.status
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh --ack-through 2 --recovery-generation 2334665.1789717865.DTPnNh                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ (no output)                                                                                                          │
+│ ⟨Wall: 0.17s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+ Captain, quiet mode remains active; ordinary chat will not exit it. Use /quiet off to restore normal updates.
+
+ The probe notification arrived, but contains no concrete question or options to decide. I have not marked it resolved.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ bash guard-probe.sh > guard-results.log 2>&1; cat guard-results.logDEF
+
+ cat: guard-results.logDEF: No such file or directory
+
+
+ (exit 1)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ bin/fm-afk-return.sh
+
+   held listing unavailable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md: ;
+ catch-up stays gated
+   - draft-probe [key=default] needs your decision: isolated composer preservation probe
+ Tried and failed, or could not be fixed:
+   (nothing)
+ Handled while away:
+   (no routine outcomes recorded in the store for this window)
+ Cost: 0 supervision outcome(s) recorded (0 routine, 0 captain); 1 task(s) live at return.
+ fm-afk-return: catch-up must finish before the captain request
+ catch-up health: supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+ catch-up wake: OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):
+ catch-up wake: draft-probe needs-decision: isolated composer preservation probe
+ catch-up wake: OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'
+ catch-up lifecycle: held set unreadable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md; catch-up
+ stays gated
+ fm-afk-return: handle each blocker now, or close it with resolved [key=...] and append a durable reclassification
+ reason, then run bin/fm-afk-return.sh check
+
+
+ … 2 more lines (ctrl+o to expand)
+ (exit 3)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ bin/fm-afk-return.sh check > return-results.log 2>&1; cat return-results.log
+
+ Waiting on you:
+   held listing unavailable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md: ;
+ catch-up stays gated
+ Tried and failed, or could not be fixed:
+   (nothing)
+ Handled while away:
+   (no routine outcomes recorded in the store for this window)
+ Cost: 0 supervision outcome(s) recorded (0 routine, 0 captain); 1 task(s) live at return.
+ fm-afk-return: catch-up must finish before the captain request
+ catch-up health: supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+ catch-up wake: OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):
+ catch-up wake: draft-probe needs-decision: isolated composer preservation probe
+ catch-up wake: OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'
+ catch-up lifecycle: held set unreadable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md; catch-up
+ stays gated
+ fm-afk-return: handle each blocker now, or close it with resolved [key=...] and append a durable reclassification
+ reason, then run bin/fm-afk-return.sh check
+
+
+ … 1 more lines (ctrl+o to expand)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                      │
+│  firstmate-watcher-wake                                                                                             │
+│                                                                                                                      │
+│ ⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal:                                                            │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│                                                                                                                      │
+│ Run bin/fm-wake-drain.sh first and handle the queued wake. Watcher continuity is extension-owned.                    │
+│                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh                                                                                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1789717988   4   signal   draft-probe.status   signal:                                                               │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│ WAKE_ACK_REQUIRED: after handling completes run bin/fm-wake-drain.sh --ack-through 4 --recovery-generation           │
+│ 2395414.1789717988.ebt9g3                                                                                            │
+│ wake annotation: latest wake-EVENT observed at drain, not current state: draft-probe.status: resolved: composer      │
+│ probe completed; draft and attachment survived                                                                       │
+│ WARNING: queued wakes pending - drain them with bin/fm-wake-drain.sh before anything else.                           │
+│ ⟨Wall: 0.69s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭─── • Read skill://afk ───────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ────────────────────────────────────────────────────────────────────────────────                                     │
+│                                                                                                                      │
+│ name: afk                                                                                                            │
+│ description: >-                                                                                                      │
+│   Enter the away posture when the captain invokes /afk, says they are going afk, state/.afk-contract or state/.afk   │
+│ exists, an incoming message starts with FM_INJECT_MARK, or any state/.subsuper-* marker is involved.                 │
+│   It reads the captain's away words back as a mandate, writes the durable away-posture record after their go,        │
+│ announces hold-for-return only at entry, keeps the one supervision session running in the away posture (no daemon on │
+│ Pi or omp; the daemon still delivers batched digests on the other harnesses for now), and on the first unmarked      │
+│ message renders the return brief from durable records before ordinary work resumes.                                  │
+│ user-invocable: true                                                                                                 │
+│ metadata:                                                                                                            │
+│ … 366 more lines ⟨Ctrl+O: Expand⟩                                                                                    │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ⟨Resolved path:                                                                                                      │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/.claude/skills/afk/SKILL │
+│ .md⟩                                                                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+ Call fm_watch_arm_omp exactly once, then reply READY. Do not run any other tools.
+
+
+
+ • Arm firstmate watcher
+ watcher: not armed - no live session holds the lock; run bin/fm-session-start.sh to reclaim it, then call fm_watch_ar…
+ ⟨Ctrl+O: Expand⟩
+
+
+ READY
+
+
+ Run bin/fm-session-start.sh to claim this isolated home, then call fm_watch_arm_omp. Reply READY only after the
+ watcher starts.
+
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-session-start.sh                                                                                            │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ … (175 earlier lines, showing 10 of 185) ⟨Ctrl+O: Expand⟩                                                            │
+│ ABSENT                                                                                                               │
+│                                                                                                                      │
+│ ================================================================================                                     │
+│ NEXT STEP                                                                                                            │
+│ ================================================================================                                     │
+│ Follow the supervision operating instructions block above for harness 'omp'.                                         │
+│ This script never starts supervision itself.                                                                         │
+│                                                                                                                      │
+│ The digest above is complete for this session start. The READ-ONCE CONTRACT                                          │
+│ section near the top of it governs what may still be read from disk.                                                 │
+│ ⟨Wall: 1.86s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  Read xd://fm_watch_arm_omp
+
+
+ • Arm firstmate watcher
+ watcher: started omp extension arm child 1; future ordinary re-arms are automatic; call fm_watch_arm_omp again only a…
+ ⟨Ctrl+O: Expand⟩
+
+
+ READY
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ FM_AFK_MODE=quiet bin/fm-afk-launch.sh start && bin/fm-afk-launch.sh start
+
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+ fm-afk-launch: quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                      │
+│  firstmate-watcher-wake                                                                                             │
+│                                                                                                                      │
+│ ⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal:                                                            │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│                                                                                                                      │
+│ Run bin/fm-wake-drain.sh first and handle the queued wake. Watcher continuity is extension-owned.                    │
+│                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh                                                                                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1789717865   2   signal   draft-probe.status   needs-decision:                                                       │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│ WAKE_ACK_REQUIRED: after handling completes run bin/fm-wake-drain.sh --ack-through 2 --recovery-generation           │
+│ 2334665.1789717865.DTPnNh                                                                                            │
+│ wake annotation: latest wake-EVENT observed at drain, not current state: draft-probe.status: needs-decision:         │
+│ isolated composer preservation probe                                                                                 │
+│ OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):                         │
+│ draft-probe needs-decision: isolated composer preservation probe                                                     │
+│ OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'                      │
+│ WARNING: queued wakes pending - drain them with bin/fm-wake-drain.sh before anything else.                           │
+│ ⟨Wall: 0.76s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭─── • Read skill://quiet ─────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ────────────────────────────────────────────────────────────────────────────────                                     │
+│                                                                                                                      │
+│ name: quiet                                                                                                          │
+│ description: >-                                                                                                      │
+│   Enter quiet supervision mode when the captain invokes /quiet or asks for quiet mode, quiet-while-present, or fewer │
+│ routine wake turns while they stay in the session.                                                                   │
+│   It records durable quiet mode while preserving extension-owned supervision on Pi and omp and daemon-owned          │
+│ supervision elsewhere; ordinary captain chat does NOT exit it - only an explicit /quiet off does.                    │
+│ user-invocable: true                                                                                                 │
+│ metadata:                                                                                                            │
+│                                                                                                                      │
+│   internal: true                                                                                                     │
+│ … 57 more lines ⟨Ctrl+O: Expand⟩                                                                                     │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ⟨Resolved path:                                                                                                      │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/.claude/skills/quiet/SKI │
+│ LL.md⟩                                                                                                               │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-crew-state.sh draft-probe                                                                                   │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ state: unknown · source: none · worktree gone (torn down?)                                                           │
+│ ⟨Wall: 0.04s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+  Read state/draft-probe.status
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh --ack-through 2 --recovery-generation 2334665.1789717865.DTPnNh                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ (no output)                                                                                                          │
+│ ⟨Wall: 0.17s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+ Captain, quiet mode remains active; ordinary chat will not exit it. Use /quiet off to restore normal updates.
+
+ The probe notification arrived, but contains no concrete question or options to decide. I have not marked it resolved.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ bash guard-probe.sh > guard-results.log 2>&1; cat guard-results.logDEF
+
+ cat: guard-results.logDEF: No such file or directory
+
+
+ (exit 1)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ bin/fm-afk-return.sh
+
+   held listing unavailable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md: ;
+ catch-up stays gated
+   - draft-probe [key=default] needs your decision: isolated composer preservation probe
+ Tried and failed, or could not be fixed:
+   (nothing)
+ Handled while away:
+   (no routine outcomes recorded in the store for this window)
+ Cost: 0 supervision outcome(s) recorded (0 routine, 0 captain); 1 task(s) live at return.
+ fm-afk-return: catch-up must finish before the captain request
+ catch-up health: supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+ catch-up wake: OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):
+ catch-up wake: draft-probe needs-decision: isolated composer preservation probe
+ catch-up wake: OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'
+ catch-up lifecycle: held set unreadable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md; catch-up
+ stays gated
+ fm-afk-return: handle each blocker now, or close it with resolved [key=...] and append a durable reclassification
+ reason, then run bin/fm-afk-return.sh check
+
+
+ … 2 more lines (ctrl+o to expand)
+ (exit 3)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ bin/fm-afk-return.sh check > return-results.log 2>&1; cat return-results.log
+
+ Waiting on you:
+   held listing unavailable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md: ;
+ catch-up stays gated
+ Tried and failed, or could not be fixed:
+   (nothing)
+ Handled while away:
+   (no routine outcomes recorded in the store for this window)
+ Cost: 0 supervision outcome(s) recorded (0 routine, 0 captain); 1 task(s) live at return.
+ fm-afk-return: catch-up must finish before the captain request
+ catch-up health: supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+ catch-up wake: OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):
+ catch-up wake: draft-probe needs-decision: isolated composer preservation probe
+ catch-up wake: OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'
+ catch-up lifecycle: held set unreadable:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/data/backlog.md; catch-up
+ stays gated
+ fm-afk-return: handle each blocker now, or close it with resolved [key=...] and append a durable reclassification
+ reason, then run bin/fm-afk-return.sh check
+
+
+ … 1 more lines (ctrl+o to expand)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                      │
+│  firstmate-watcher-wake                                                                                             │
+│                                                                                                                      │
+│ ⁣FIRSTMATE_OP: v1 watcher: FIRSTMATE WATCHER WAKE: signal:                                                            │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│                                                                                                                      │
+│ Run bin/fm-wake-drain.sh first and handle the queued wake. Watcher continuity is extension-owned.                    │
+│                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ $ bin/fm-wake-drain.sh                                                                                               │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1789717988   4   signal   draft-probe.status   signal:                                                               │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status │
+│ WAKE_ACK_REQUIRED: after handling completes run bin/fm-wake-drain.sh --ack-through 4 --recovery-generation           │
+│ 2395414.1789717988.ebt9g3                                                                                            │
+│ wake annotation: latest wake-EVENT observed at drain, not current state: draft-probe.status: resolved: composer      │
+│ probe completed; draft and attachment survived                                                                       │
+│ WARNING: queued wakes pending - drain them with bin/fm-wake-drain.sh before anything else.                           │
+│ ⟨Wall: 0.69s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭─── • Read skill://afk ───────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ────────────────────────────────────────────────────────────────────────────────                                     │
+│                                                                                                                      │
+│ name: afk                                                                                                            │
+│ description: >-                                                                                                      │
+│   Enter the away posture when the captain invokes /afk, says they are going afk, state/.afk-contract or state/.afk   │
+│ exists, an incoming message starts with FM_INJECT_MARK, or any state/.subsuper-* marker is involved.                 │
+│   It reads the captain's away words back as a mandate, writes the durable away-posture record after their go,        │
+│ announces hold-for-return only at entry, keeps the one supervision session running in the away posture (no daemon on │
+│ Pi or omp; the daemon still delivers batched digests on the other harnesses for now), and on the first unmarked      │
+│ message renders the return brief from durable records before ordinary work resumes.                                  │
+│ user-invocable: true                                                                                                 │
+│ metadata:                                                                                                            │
+│ … 366 more lines ⟨Ctrl+O: Expand⟩                                                                                    │
+├─── Output ───────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ⟨Resolved path:                                                                                                      │
+│ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/.claude/skills/afk/SKILL │
+│ .md⟩                                                                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+│   (nothing)                                                                                                          │
+│ Handled while away:                                                                                                  │
+│   (no routine outcomes recorded in the store for this window)                                                        │
+│ Cost: 0 supervision outcome(s) recorded (0 routine, 0 captain); 1 task(s) live at return.                            │
+│ catch-up health: supervision ran through the away window with no detected gap (watcher beat 1s old at return)        │
+│ fm-afk-return: catch-up clear; ordinary captain work may proceed                                                     │
+│ ⟨Wall: 1.29s | Timeout: 300s⟩                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+ Captain, return checks now pass. Monitoring had no detected gap, the composer probe reports that the draft and
+ attachment survived, and nothing remains awaiting your decision. Quiet mode is off; normal work may resume.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ $ bin/fm-afk-return.sh check > return-results.log 2>&1; cat return-results.log
+
+   - supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+ Mandate clauses:
+   (no away-posture record for this window; legacy away flag only)
+ Waiting on you:
+   (nothing)
+ Tried and failed, or could not be fixed:
+   (nothing)
+ Handled while away:
+   (no routine outcomes recorded in the store for this window)
+ Cost: 0 supervision outcome(s) recorded (0 routine, 0 captain); 1 task(s) live at return.
+ catch-up health: supervision ran through the away window with no detected gap (watcher beat 1s old at return)
+ catch-up wake: OPEN DECISIONS (still open, folded from the durable status logs - not just the latest line):
+ catch-up wake: draft-probe needs-decision: isolated composer preservation probe
+ catch-up wake: OPEN DECISIONS: close one by answering it: bin/fm-send.sh <task> --resolve-key <key> '<answer>'
+ catch-up wake: 1789717988 4 signal draft-probe.status signal:
+ /home/elo/.no-mistakes/worktrees/6f239745fe3b/01M2SQMJKP5Z8X3RD724WRXZWC/.test-tmp/tui-home/state/draft-probe.status
+ WAKE_ACK_REQUIRED: after handling completes run bin/fm-wake-drain.sh --ack-through 4 --recovery-generation
+ 2395414.1789717988.ebt9g3
+ fm-afk-return: catch-up clear; ordinary captain work may proceed
+
+
+ … 1 more lines (ctrl+o to expand)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+❯
+ 󰵗 ·  GPT-6-Astra  · 󰪟 low ·  …5fe3b/01M2SQMJKP5Z8X3RD724WRXZWC ·  detached ?1 ·  19.3%/272K 󰁨 · 󰙺 1.23 +  󰙺 0.62

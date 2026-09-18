@@ -1,0 +1,25 @@
+fm-afk-launch: return catch-up is still pending; run bin/fm-afk-return.sh check before re-entering away mode
+REFUSED catchup start
+fm-afk-launch: return catch-up is still pending; run bin/fm-afk-return.sh check before re-entering away mode
+REFUSED catchup start-native
+fm-afk-launch: finish the away return before entering quiet mode
+REFUSED away start
+fm-afk-launch: finish the away return before entering quiet mode
+REFUSED away start-native
+fm-afk-launch: finish the away return before entering quiet mode
+REFUSED contract start
+fm-afk-launch: finish the away return before entering quiet mode
+REFUSED contract start-native
+fm-afk-launch: stop the recorded away daemon before entering extension-owned quiet mode
+REFUSED recorded-daemon start
+fm-afk-launch: stop the recorded away daemon before entering extension-owned quiet mode
+REFUSED recorded-daemon start-native
+fm-afk-launch: daemon lock is still held or initializing; quiet entry refused
+REFUSED live-lock start
+fm-afk-launch: daemon lock is still held or initializing; quiet entry refused
+REFUSED live-lock start-native
+fm-afk-launch: daemon lock is still held or initializing; quiet entry refused
+REFUSED initializing-lock start
+fm-afk-launch: daemon lock is still held or initializing; quiet entry refused
+REFUSED initializing-lock start-native
+DETECTED omp
