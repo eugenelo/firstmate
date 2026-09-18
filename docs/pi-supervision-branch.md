@@ -151,7 +151,9 @@ No caching machinery beyond this exists, deliberately: any later dynamic content
 ## Away mode
 
 On Pi the away daemon is no longer launched: `/afk` writes the away-posture record (`state/.afk-contract`, owned by `bin/fm-afk-contract.sh`) and never the `state/.afk` daemon flag, so the branch keeps its attended shape under the record until the posture-aware dispatch lands in a later phase.
-The branch's decline while `state/.afk` exists is retained only for a legacy flag left by an older daemon launch.
+With `state/.afk` present, the branch accepts otherwise eligible offers only when its first line is exactly `quiet` and neither `.afk-daemon-terminal` nor `.supervise-daemon.lock` exists in `state/`.
+Other flag contents, unreadable flags, and either daemon marker make the branch defer.
+`tests/fm-pi-branch-extension.test.sh` covers these posture boundaries; the [quiet skill](../.agents/skills/quiet/SKILL.md) owns entry and exit.
 What the branch already does for the captain is unchanged: it absorbs the routine majority that previously interrupted the captain's conversation, applying the same escalation etiquette the daemon applies on the harnesses that still run one.
 
 ## Verification

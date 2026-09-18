@@ -117,6 +117,95 @@ unit_extension_harnesses_never_launch_the_daemon() {
   done
 }
 
+unit_extension_quiet_lifecycle() {
+  local st harness command out
+  for harness in pi pi-signed omp; do
+    st=$(mktemp -d "${TMPDIR:-/tmp}/fm-quiet-extension.XXXXXX")
+    mkdir -p "$st/state"
+    for command in start start-native; do
+      out=$(FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" FM_AFK_MODE=quiet \
+        bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main "$2"' _ "$LAUNCH" "$command" 2>&1) \
+        || fail "$harness: quiet $command failed: $out"
+      [ "$(read_mode "$st/state")" = quiet ] || fail "$harness: quiet mode was not durable"
+      [ ! -e "$st/state/.afk-contract" ] && [ ! -e "$st/state/.afk-daemon-terminal" ] \
+        || fail "$harness: quiet entry created an away record or daemon"
+    done
+    FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" \
+      bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main start' _ "$LAUNCH" \
+      >/dev/null 2>&1 || fail "$harness: bare quiet refresh failed"
+    [ "$(read_mode "$st/state")" = quiet ] || fail "$harness: refresh reset quiet"
+    FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" "$LAUNCH" stop >/dev/null 2>&1 \
+      || fail "$harness: quiet stop failed"
+    [ ! -e "$st/state/.afk" ] || fail "$harness: quiet stop retained the flag"
+    : > "$st/state/.afk-return-catchup"
+    if FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" FM_AFK_MODE=quiet \
+      bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main start' _ "$LAUNCH" >/dev/null 2>&1; then
+      fail "$harness: quiet entry bypassed the pending return"
+    fi
+    [ ! -e "$st/state/.afk" ] || fail "$harness: refused entry changed the posture"
+    rm "$st/state/.afk-return-catchup"
+    printf 'away\n%s\n' "$(date +%s)" > "$st/state/.afk"
+    if FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" FM_AFK_MODE=quiet \
+      bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main start' _ "$LAUNCH" >/dev/null 2>&1; then
+      fail "$harness: quiet entry bypassed a legacy away return"
+    fi
+    [ "$(read_mode "$st/state")" = away ] || fail "$harness: refused quiet entry changed away mode"
+    rm -rf "$st"
+    pass "$harness: quiet enters without away consent, refreshes durably, exits, and respects pending return"
+  done
+}
+
+unit_extension_quiet_daemon_locks() {
+  local st harness shape command lock owner out
+  for harness in pi pi-signed omp; do
+    for shape in directory symlink live initializing; do
+      for command in start start-native; do
+        st=$(mktemp -d "${TMPDIR:-/tmp}/fm-quiet-lock.XXXXXX")
+        mkdir -p "$st/state"
+        lock="$st/state/.supervise-daemon.lock"
+        case "$shape" in
+          directory)
+            mkdir "$lock"
+            bash -c 'printf "%s\n" "$$" > "$1/pid"' _ "$lock"
+            ;;
+          symlink)
+            bash -c '. "$1"; fm_lock_try_acquire "$2"' _ "$ROOT/bin/fm-wake-lib.sh" "$lock"
+            ;;
+          live)
+            mkdir "$lock"
+            printf '%s\n' "$$" > "$lock/pid"
+            ;;
+          initializing)
+            mkdir "$lock"
+            touch -t 209901010000 "$lock"
+            ;;
+        esac
+        owner=$(readlink "$lock" 2>/dev/null || printf '%s' "$lock")
+        if out=$(FM_HOME="$st" FM_STATE_OVERRIDE="$st/state" FM_TEST_HARNESS="$harness" FM_AFK_MODE=quiet \
+          bash -c '. "$1"; fm_afk_launch_primary_harness() { printf "%s" "$FM_TEST_HARNESS"; }; fm_afk_launch_main "$2"' _ "$LAUNCH" "$command" 2>&1); then
+          case "$shape" in
+            live|initializing) fail "$harness $command: accepted $shape daemon lock" ;;
+            *)
+              [ "$(read_mode "$st/state")" = quiet ] && [ ! -e "$lock" ] && [ ! -L "$lock" ] && [ ! -e "$owner" ] \
+                || fail "$harness $command: stale $shape daemon lock survived quiet entry"
+              ;;
+          esac
+        else
+          case "$shape" in
+            live|initializing)
+              [ -d "$lock" ] && [ ! -e "$st/state/.afk" ] \
+                || fail "$harness $command: refusal modified $shape daemon state"
+              ;;
+            *) fail "$harness $command: stale $shape daemon lock blocked quiet entry: $out" ;;
+          esac
+        fi
+        rm -rf "$st"
+      done
+    done
+  done
+  [ "$FAILED" -ne 0 ] || pass "quiet entry reclaims dead daemon locks and preserves live or initializing owners"
+}
+
 unit_daemon_entry_requires_confirmation() {
   local st out rc
   st=$(mktemp -d "${TMPDIR:-/tmp}/fm-afk-entry-record.XXXXXX")
@@ -1186,6 +1275,12 @@ e2e_tmux() {
   rm -rf "$home_tmp" 2>/dev/null || true
 }
 
+if [ "${1:-}" = --quiet-only ]; then
+  unit_extension_quiet_lifecycle
+  unit_extension_quiet_daemon_locks
+  exit "$FAILED"
+fi
+
 unit_clear_stale
 unit_propose_confirm_records_the_posture_without_a_daemon
 unit_extension_harnesses_never_launch_the_daemon
@@ -1197,6 +1292,8 @@ unit_fresh_vs_refresh
 unit_mode_explicit_write
 unit_mode_fresh_defaults_away
 unit_mode_refresh_preserves_quiet
+unit_extension_quiet_lifecycle
+unit_extension_quiet_daemon_locks
 unit_mode_garbage_and_legacy_content_reads_away
 unit_stop_ordering
 unit_stop_rejects_reused_pid

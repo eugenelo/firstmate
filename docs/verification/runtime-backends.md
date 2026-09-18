@@ -2104,3 +2104,27 @@ This validates the real doctor and worker probe in an OMP-only environment, not 
 
 `tests/fm-remote-secondmate-lifecycle-e2e.test.sh` provides deterministic coverage for the launch/relaunch and refusal contracts.
 Repeat the real-host procedure after OMP or remote-lifecycle changes; fixture coverage does not establish vendor process or extension behavior.
+
+### Quiet entry and notification drafts (2026-09-17)
+
+Verified on Linux with omp 18.2.3 and `openai-codex/gpt-6-astra` in a helper-owned non-default Herdr lab.
+The real TUI was launched with `env -u FM_OMP_HARNESS -u CLAUDECODE ... omp`; `FM_HOME` pointed to the isolated lab and `FM_ROOT_OVERRIDE` to the source under test.
+No harness marker was supplied.
+From that TUI's native `!` command, with the lab directory immediately below the source root:
+
+```sh
+../bin/fm-harness.sh
+FM_AFK_MODE=quiet ../bin/fm-afk-launch.sh start
+../bin/fm-afk-launch.sh start
+../bin/fm-afk-return.sh
+```
+
+Observed detection was `omp`; entry and refresh both printed `quiet mode active; the existing extension keeps supervision, ordinary chat does not exit quiet mode`.
+The quiet flag survived an ordinary model response, no away record or daemon terminal was created, and the extension retained its live watcher.
+Routine no-change heartbeats were absorbed, with the heartbeat streak advancing to four.
+A `needs-decision` status produced a durable queued signal and a real `firstmate-watcher-wake` custom message.
+During that delivery, the composer retained `DRAFT_ABCDEF` and an attached local PNG; after three left-arrow presses before delivery, typing `X` afterward produced `DRAFT_ABCXDEF`, with the same image preview still present.
+The clean return cleared the quiet flag and catch-up gate, kept the watcher alive, and reported `supervision ran through the away window with no detected gap`.
+
+`FM_OMP_LIVE_E2E=1 bin/fm-test-run.sh tests/fm-omp-primary-live-e2e.test.sh` exercises unmarked launch and the quiet lifecycle; the interactive draft, cursor, and attachment check above remains a manual TUI check rather than an RPC assertion.
+`tests/fm-afk-launch.test.sh` and `tests/fm-watch-triage.test.sh` cover quiet lifecycle boundaries and routine-versus-actionable suppression without installed harness credentials.
